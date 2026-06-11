@@ -17,11 +17,9 @@
 :root{
   --bg:#02050e;
   --ink:#eaf1ff;
-  --muted:#93a3c2;
+  --muted:#8da0bf;
   --cyan:#38e1ff;
-  --violet:#8b5cf6;
-  --gold:#ffc94d;
-  --line:rgba(147,163,194,.15);
+  --line:rgba(141,160,191,.15);
   --card:rgba(10,18,38,.55);
   --pad:clamp(1.25rem,5vw,5rem);
 }
@@ -50,8 +48,8 @@ img{max-width:100%}
   font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.5em;text-indent:.5em;
   font-size:clamp(.8rem,2.4vw,1.05rem);color:var(--ink);opacity:.9;
 }
-#loader .track{width:min(280px,60vw);height:1px;background:rgba(147,163,194,.2);overflow:hidden}
-#loader .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--violet))}
+#loader .track{width:min(280px,60vw);height:1px;background:rgba(141,160,191,.2);overflow:hidden}
+#loader .fill{height:100%;width:0%;background:var(--cyan)}
 #loader .pct{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.3em;color:var(--muted)}
 
 /* ============ canvas & overlays ============ */
@@ -62,13 +60,31 @@ img{max-width:100%}
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 .content{position:relative;z-index:2}
 
+/* ============ journey UI ============ */
+.progress-line{position:fixed;top:0;left:0;right:0;height:2px;z-index:60;background:transparent}
+.progress-line span{display:block;height:100%;width:0;background:var(--cyan);box-shadow:0 0 10px rgba(56,225,255,.6)}
+.journey-nav{position:fixed;right:1.4rem;top:50%;transform:translateY(-50%);z-index:48;
+  display:flex;flex-direction:column;gap:1.1rem}
+.journey-nav a{display:flex;align-items:center;gap:.6rem;justify-content:flex-end;color:var(--muted)}
+.journey-nav .jlabel{font-family:'Space Grotesk',sans-serif;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;
+  opacity:0;transform:translateX(6px);transition:opacity .3s,transform .3s,color .3s}
+.journey-nav a:hover .jlabel{opacity:1;transform:none}
+.journey-nav .jdot{width:7px;height:7px;border-radius:50%;border:1px solid var(--muted);transition:.3s;flex:none}
+.journey-nav a.active .jdot{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 10px rgba(56,225,255,.7)}
+.journey-nav a.active{color:var(--cyan)}
+.journey-nav a.active .jlabel{opacity:1;transform:none}
+@media(max-width:880px){.journey-nav{display:none}}
+.ghost-num{position:absolute;top:clamp(2.4rem,7vh,4.6rem);right:var(--pad);z-index:-1;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(5rem,14vw,11rem);line-height:1;
+  color:transparent;-webkit-text-stroke:1px rgba(141,160,191,.14);user-select:none;pointer-events:none}
+
 /* ============ cursor (desktop only) ============ */
 .cursor{position:fixed;z-index:99;top:0;left:0;width:10px;height:10px;border-radius:50%;
   background:var(--cyan);pointer-events:none;mix-blend-mode:screen;display:none}
 .cursor-ring{position:fixed;z-index:99;top:0;left:0;width:36px;height:36px;border-radius:50%;
   border:1px solid rgba(56,225,255,.5);pointer-events:none;display:none;transition:width .25s,height .25s,border-color .25s}
 @media(pointer:fine){.cursor,.cursor-ring{display:block}}
-body.link-hover .cursor-ring{width:56px;height:56px;border-color:rgba(255,201,77,.7)}
+body.link-hover .cursor-ring{width:56px;height:56px;border-color:rgba(56,225,255,.85)}
 
 /* ============ nav ============ */
 nav{
@@ -81,7 +97,7 @@ nav{
 nav.scrolled{background:rgba(2,5,14,.7);backdrop-filter:blur(18px);border-bottom-color:var(--line)}
 .logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;display:flex;align-items:center;gap:.55rem;z-index:60;position:relative}
 .logo .bolt{width:26px;height:26px;display:grid;place-items:center;border-radius:7px;
-  background:linear-gradient(135deg,var(--cyan),var(--violet));font-size:.85rem;flex:none}
+  background:var(--cyan);font-size:.85rem;flex:none}
 .logo span.v{color:var(--muted);font-weight:400}
 .navlinks{display:flex;gap:2.2rem;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .navlinks a{transition:color .25s;position:relative;padding:.2rem 0}
@@ -123,14 +139,14 @@ body.menu-open .mobile-menu a{transform:none;opacity:1}
 }
 .hero h1 .line{display:block;overflow:hidden}
 .hero h1 .line span{display:inline-block}
-.hero h1 .grad{background:linear-gradient(95deg,var(--cyan) 5%,var(--violet) 55%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 .grad{color:var(--cyan)}
 .hero-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;margin-top:2.2rem;flex-wrap:wrap}
 .hero-foot p{max-width:440px;color:var(--muted);font-size:.98rem;text-shadow:0 2px 18px rgba(2,5,14,.9)}
 .hero-actions{display:flex;gap:.9rem;flex-wrap:wrap}
 .btn{font-family:'Space Grotesk',sans-serif;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
   padding:1rem 2.1rem;border-radius:99px;transition:transform .3s,box-shadow .3s,background .3s,border-color .3s,color .3s;display:inline-block}
-.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04101c;font-weight:600;box-shadow:0 0 36px rgba(56,225,255,.28)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(139,92,246,.5)}
+.btn-primary{background:var(--cyan);color:#04101c;font-weight:600;box-shadow:0 0 36px rgba(56,225,255,.28)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 56px rgba(56,225,255,.45)}
 .btn-ghost{border:1px solid var(--line);color:var(--ink)}
 .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
 .hero-meta{position:absolute;top:50%;right:var(--pad);transform:translateY(-50%);
@@ -167,17 +183,16 @@ section{padding:clamp(5rem,12vh,8.5rem) var(--pad);max-width:1400px;margin:0 aut
 .scale-node{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.9rem 1.5rem;
   backdrop-filter:blur(14px);position:relative;overflow:hidden;transition:border-color .35s,transform .35s}
 .scale-node:hover{transform:translateY(-6px);border-color:rgba(56,225,255,.45)}
-.scale-node .type{font-family:'Space Grotesk',sans-serif;font-size:2.4rem;font-weight:700;
-  background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.scale-node .type{font-family:'Space Grotesk',sans-serif;font-size:2.4rem;font-weight:700;color:var(--cyan)}
 .scale-node h4{margin:.35rem 0 .6rem;font-size:1.02rem}
 .scale-node p{font-size:.84rem;color:var(--muted);line-height:1.6}
-.scale-node.active{border-color:rgba(255,201,77,.5);box-shadow:0 0 60px rgba(255,201,77,.07) inset}
-.scale-node.active::after{content:"WE ARE HERE";position:absolute;top:1rem;right:1rem;font-size:.56rem;letter-spacing:.2em;color:var(--gold);border:1px solid rgba(255,201,77,.4);border-radius:99px;padding:.25rem .6rem}
+.scale-node.active{border-color:rgba(56,225,255,.5);box-shadow:0 0 60px rgba(56,225,255,.06) inset}
+.scale-node.active::after{content:"WE ARE HERE";position:absolute;top:1rem;right:1rem;font-size:.56rem;letter-spacing:.2em;color:var(--cyan);border:1px solid rgba(56,225,255,.4);border-radius:99px;padding:.25rem .6rem}
 .progress-wrap{margin-top:2.6rem;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:clamp(1.4rem,3vw,2.2rem);backdrop-filter:blur(14px)}
 .progress-label{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
-.progress-label b{font-family:'Space Grotesk',sans-serif;color:var(--gold);font-size:1.5rem;letter-spacing:0}
-.bar{height:8px;border-radius:99px;background:rgba(147,163,194,.12);overflow:hidden}
-.bar-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--gold));box-shadow:0 0 18px rgba(56,225,255,.5)}
+.progress-label b{font-family:'Space Grotesk',sans-serif;color:var(--cyan);font-size:1.5rem;letter-spacing:0}
+.bar{height:8px;border-radius:99px;background:rgba(141,160,191,.12);overflow:hidden}
+.bar-fill{height:100%;width:0;border-radius:99px;background:var(--cyan);box-shadow:0 0 18px rgba(56,225,255,.5)}
 @media(max-width:980px){.scale-track{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:540px){.scale-track{grid-template-columns:1fr}}
 
@@ -206,15 +221,14 @@ section{padding:clamp(5rem,12vh,8.5rem) var(--pad);max-width:1400px;margin:0 aut
 /* ============ stats ============ */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;margin-top:2.6rem}
 .stat{text-align:center;padding:1.9rem .9rem;border:1px solid var(--line);border-radius:20px;background:var(--card);backdrop-filter:blur(14px)}
-.stat .num{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:700;
-  background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .num{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:700;color:var(--ink)}
 .stat .lbl{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:.4rem}
 @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
 
 /* ============ roadmap ============ */
 .timeline{position:relative;padding-left:2rem}
 .timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
-  background:linear-gradient(180deg,var(--cyan),var(--violet),var(--gold))}
+  background:linear-gradient(180deg,var(--cyan),rgba(56,225,255,.15))}
 .tl-item{position:relative;padding:0 0 2.6rem 1.6rem}
 .tl-item:last-child{padding-bottom:0}
 .tl-item::before{content:"";position:absolute;left:-2rem;top:8px;width:16px;height:16px;border-radius:50%;
@@ -226,7 +240,7 @@ section{padding:clamp(5rem,12vh,8.5rem) var(--pad);max-width:1400px;margin:0 aut
 /* ============ quote ============ */
 .quote{text-align:center;max-width:920px}
 .quote blockquote{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.5rem,3.6vw,2.5rem);font-weight:400;line-height:1.4}
-.quote blockquote .grad{background:linear-gradient(95deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.quote blockquote .grad{color:var(--cyan)}
 .quote cite{display:block;margin-top:1.5rem;font-style:normal;font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
 
 /* ============ contact ============ */
@@ -270,6 +284,15 @@ footer .flinks a:hover{color:var(--cyan)}
 <canvas id="scene"></canvas>
 <div class="vignette"></div>
 <div class="grain"></div>
+<div class="progress-line"><span id="scrollProgress"></span></div>
+<aside class="journey-nav" id="journeyNav" aria-label="Page sections">
+  <a href="#hero" data-section="hero"><span class="jlabel">Start</span><span class="jdot"></span></a>
+  <a href="#kardashev" data-section="kardashev"><span class="jlabel">The Scale</span><span class="jdot"></span></a>
+  <a href="#divisions" data-section="divisions"><span class="jlabel">Divisions</span><span class="jdot"></span></a>
+  <a href="#roadmap" data-section="roadmap"><span class="jlabel">Roadmap</span><span class="jdot"></span></a>
+  <a href="#vision" data-section="vision"><span class="jlabel">Vision</span><span class="jdot"></span></a>
+  <a href="#contact" data-section="contact"><span class="jlabel">Partner</span><span class="jdot"></span></a>
+</aside>
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 
@@ -330,7 +353,7 @@ footer .flinks a:hover{color:var(--cyan)}
 
   <!-- KARDASHEV -->
   <section id="kardashev">
-    <div class="sec-index">01 / 05</div>
+    <div class="ghost-num" aria-hidden="true">01</div>
     <div class="sec-head">
       <div class="kicker" data-reveal>The Kardashev Scale</div>
       <h2 data-reveal>Civilizations are measured by the energy they command.</h2>
@@ -366,7 +389,7 @@ footer .flinks a:hover{color:var(--cyan)}
 
   <!-- DIVISIONS -->
   <section id="divisions">
-    <div class="sec-index">02 / 05</div>
+    <div class="ghost-num" aria-hidden="true">02</div>
     <div class="sec-head">
       <div class="kicker" data-reveal>Six Pillars</div>
       <h2 data-reveal>The divisions driving the transition.</h2>
@@ -420,7 +443,7 @@ footer .flinks a:hover{color:var(--cyan)}
 
   <!-- ROADMAP -->
   <section id="roadmap">
-    <div class="sec-index">03 / 05</div>
+    <div class="ghost-num" aria-hidden="true">03</div>
     <div class="sec-head">
       <div class="kicker" data-reveal>Roadmap</div>
       <h2 data-reveal>A 50-year transition, in deliberate phases.</h2>
@@ -451,7 +474,7 @@ footer .flinks a:hover{color:var(--cyan)}
 
   <!-- VISION -->
   <section id="vision" class="quote">
-    <div class="sec-index">04 / 05</div>
+    <div class="ghost-num" aria-hidden="true">04</div>
     <div data-reveal>
       <blockquote>"The transition to a Type I civilization is not inevitable — it is <span class="grad">engineered</span>. Someone has to build it. That is the work of Infinara Ventures."</blockquote>
       <cite>— Infinara Ventures</cite>
@@ -460,7 +483,7 @@ footer .flinks a:hover{color:var(--cyan)}
 
   <!-- CONTACT -->
   <section id="contact">
-    <div class="sec-index">05 / 05</div>
+    <div class="ghost-num" aria-hidden="true">05</div>
     <div class="contact-panel" data-reveal>
       <h2>Partner With Us</h2>
       <p>Founders, researchers, investors, and institutions building toward planetary-scale capability — we want to hear from you.</p>
@@ -654,8 +677,8 @@ function makeStars(count, size, spread, color, opacity) {
   return new THREE.Points(g, new THREE.PointsMaterial({ size, color, transparent: true, opacity, depthWrite: false }));
 }
 const stars1 = makeStars(isMobile ? 1200 : 2200, 0.05, 130, 0xcfe0ff, 0.9);
-const stars2 = makeStars(isMobile ? 400 : 800, 0.09, 110, 0x8b5cf6, 0.6);
-const stars3 = makeStars(isMobile ? 350 : 650, 0.07, 100, 0x38e1ff, 0.7);
+const stars2 = makeStars(isMobile ? 400 : 800, 0.09, 110, 0x9fb6d8, 0.5);
+const stars3 = makeStars(isMobile ? 350 : 650, 0.07, 100, 0xeaf4ff, 0.65);
 scene.add(stars1, stars2, stars3);
 
 /* satellite ring of drifting points around earth */
@@ -831,7 +854,23 @@ function buildScroll() {
 <script>
 /* ================= UI (non-3D) ================= */
 const nav = document.getElementById('nav');
-addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
+const scrollProgress = document.getElementById('scrollProgress');
+addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', scrollY > 40);
+  const max = document.documentElement.scrollHeight - innerHeight;
+  scrollProgress.style.width = (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+}, { passive: true });
+
+/* journey nav: highlight the chapter in view */
+const journeyLinks = [...document.querySelectorAll('#journeyNav a')];
+const sectionForLink = (id) => document.getElementById(id);
+const jObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    journeyLinks.forEach((l) => l.classList.toggle('active', l.dataset.section === entry.target.id));
+  });
+}, { rootMargin: '-45% 0px -45% 0px' });
+journeyLinks.forEach((l) => { const s = sectionForLink(l.dataset.section); if (s) jObserver.observe(s); });
 document.getElementById('year').textContent = new Date().getFullYear();
 
 /* mobile menu */
