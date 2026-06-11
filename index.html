@@ -15,177 +15,263 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <style>
 :root{
-  --bg:#030712;
-  --bg-soft:#0a1120;
-  --ink:#e8eefc;
-  --muted:#8b9bb8;
-  --cyan:#22d3ee;
+  --bg:#02050e;
+  --ink:#eaf1ff;
+  --muted:#93a3c2;
+  --cyan:#38e1ff;
   --violet:#8b5cf6;
-  --gold:#fbbf24;
-  --line:rgba(139,155,184,.16);
-  --card:rgba(13,21,40,.62);
+  --gold:#ffc94d;
+  --line:rgba(147,163,194,.15);
+  --card:rgba(10,18,38,.55);
+  --pad:clamp(1.25rem,5vw,5rem);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scrollbar-width:thin;scrollbar-color:rgba(56,225,255,.35) transparent}
+html,body{background:var(--bg)}
 body{
-  background:var(--bg);
   color:var(--ink);
   font-family:'Inter',sans-serif;
   font-weight:300;
   line-height:1.7;
   overflow-x:hidden;
 }
-::selection{background:rgba(34,211,238,.3)}
-h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:600;line-height:1.15}
+::selection{background:rgba(56,225,255,.28)}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:600;line-height:1.08;letter-spacing:-.02em}
 a{color:inherit;text-decoration:none}
-#scene{position:fixed;inset:0;z-index:0;pointer-events:none}
-.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+img{max-width:100%}
+
+/* ============ preloader ============ */
+#loader{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;
+}
+#loader .word{
+  font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.5em;text-indent:.5em;
+  font-size:clamp(.8rem,2.4vw,1.05rem);color:var(--ink);opacity:.9;
+}
+#loader .track{width:min(280px,60vw);height:1px;background:rgba(147,163,194,.2);overflow:hidden}
+#loader .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--violet))}
+#loader .pct{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.3em;color:var(--muted)}
+
+/* ============ canvas & overlays ============ */
+#scene{position:fixed;inset:0;z-index:0}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 120% 90% at 50% 50%,transparent 55%,rgba(2,5,14,.65) 100%)}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.045;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 .content{position:relative;z-index:2}
 
-/* ---------- nav ---------- */
+/* ============ cursor (desktop only) ============ */
+.cursor{position:fixed;z-index:99;top:0;left:0;width:10px;height:10px;border-radius:50%;
+  background:var(--cyan);pointer-events:none;mix-blend-mode:screen;display:none}
+.cursor-ring{position:fixed;z-index:99;top:0;left:0;width:36px;height:36px;border-radius:50%;
+  border:1px solid rgba(56,225,255,.5);pointer-events:none;display:none;transition:width .25s,height .25s,border-color .25s}
+@media(pointer:fine){.cursor,.cursor-ring{display:block}}
+body.link-hover .cursor-ring{width:56px;height:56px;border-color:rgba(255,201,77,.7)}
+
+/* ============ nav ============ */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:50;
   display:flex;align-items:center;justify-content:space-between;
-  padding:1.1rem clamp(1.2rem,5vw,4rem);
+  padding:1rem var(--pad);
   transition:background .4s,backdrop-filter .4s,border-color .4s;
   border-bottom:1px solid transparent;
 }
-nav.scrolled{background:rgba(3,7,18,.72);backdrop-filter:blur(18px);border-bottom-color:var(--line)}
-.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:.14em;display:flex;align-items:center;gap:.55rem}
+nav.scrolled{background:rgba(2,5,14,.7);backdrop-filter:blur(18px);border-bottom-color:var(--line)}
+.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;display:flex;align-items:center;gap:.55rem;z-index:60;position:relative}
 .logo .bolt{width:26px;height:26px;display:grid;place-items:center;border-radius:7px;
-  background:linear-gradient(135deg,var(--cyan),var(--violet));font-size:.85rem}
+  background:linear-gradient(135deg,var(--cyan),var(--violet));font-size:.85rem;flex:none}
 .logo span.v{color:var(--muted);font-weight:400}
-.navlinks{display:flex;gap:2.2rem;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-.navlinks a{transition:color .25s}
+.navlinks{display:flex;gap:2.2rem;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.navlinks a{transition:color .25s;position:relative;padding:.2rem 0}
+.navlinks a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--cyan);transition:width .3s}
 .navlinks a:hover{color:var(--cyan)}
-.nav-cta{font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;padding:.6rem 1.3rem;border:1px solid rgba(34,211,238,.45);border-radius:99px;color:var(--cyan);transition:.3s}
-.nav-cta:hover{background:rgba(34,211,238,.12);box-shadow:0 0 24px rgba(34,211,238,.25)}
-@media(max-width:860px){.navlinks{display:none}}
+.navlinks a:hover::after{width:100%}
+.nav-cta{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;padding:.6rem 1.3rem;border:1px solid rgba(56,225,255,.45);border-radius:99px;color:var(--cyan);transition:.3s}
+.nav-cta:hover{background:rgba(56,225,255,.12);box-shadow:0 0 24px rgba(56,225,255,.25)}
+.burger{display:none;z-index:60;position:relative;width:40px;height:40px;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.burger span{display:block;width:22px;height:1.5px;background:var(--ink);transition:.35s}
+body.menu-open .burger span:nth-child(1){transform:translateY(4px) rotate(45deg)}
+body.menu-open .burger span:nth-child(2){transform:translateY(-3.5px) rotate(-45deg)}
+.mobile-menu{
+  position:fixed;inset:0;z-index:55;background:rgba(2,5,14,.92);backdrop-filter:blur(24px);
+  display:flex;flex-direction:column;justify-content:center;gap:.4rem;padding:0 2rem;
+  opacity:0;visibility:hidden;transition:opacity .4s,visibility .4s;
+}
+body.menu-open .mobile-menu{opacity:1;visibility:visible}
+.mobile-menu a{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,8vw,2.6rem);font-weight:600;padding:.5rem 0;color:var(--ink);
+  transform:translateY(20px);opacity:0;transition:transform .5s,opacity .5s,color .3s}
+body.menu-open .mobile-menu a{transform:none;opacity:1}
+.mobile-menu a:nth-child(2){transition-delay:.05s}.mobile-menu a:nth-child(3){transition-delay:.1s}
+.mobile-menu a:nth-child(4){transition-delay:.15s}.mobile-menu a:nth-child(5){transition-delay:.2s}
+.mobile-menu a:hover{color:var(--cyan)}
+.mobile-menu .mm-label{font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+@media(max-width:880px){
+  .navlinks,.nav-cta{display:none}
+  .burger{display:flex}
+}
 
-/* ---------- hero ---------- */
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:7rem 1.5rem 4rem;position:relative}
-.hero::before{content:"";position:absolute;inset:20% 0 12%;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(3,7,18,.55),transparent 70%);pointer-events:none}
-.hero>*{position:relative;text-shadow:0 2px 24px rgba(3,7,18,.95),0 0 60px rgba(3,7,18,.7)}
-.kicker{font-size:.72rem;letter-spacing:.34em;text-transform:uppercase;color:var(--cyan);margin-bottom:1.4rem;display:inline-flex;align-items:center;gap:.8rem}
-.kicker::before,.kicker::after{content:"";width:34px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan))}
-.kicker::after{background:linear-gradient(90deg,var(--cyan),transparent)}
-.hero h1{font-size:clamp(2.6rem,7vw,5.4rem);max-width:1000px;letter-spacing:-.02em}
-.hero h1 .grad{background:linear-gradient(95deg,var(--cyan) 10%,var(--violet) 55%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p{max-width:620px;margin:1.6rem auto 2.6rem;color:var(--muted);font-size:1.05rem}
-.hero-actions{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
-.btn{font-family:'Space Grotesk',sans-serif;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;padding:1rem 2.2rem;border-radius:99px;transition:.3s;display:inline-block}
-.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04101c;font-weight:600;box-shadow:0 0 40px rgba(34,211,238,.3)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(139,92,246,.45)}
+/* ============ hero ============ */
+.hero{min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 var(--pad) clamp(3rem,8vh,5.5rem);position:relative}
+.hero .kicker{font-size:.68rem;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan);margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem}
+.hero .kicker::before{content:"";width:38px;height:1px;background:var(--cyan)}
+.hero h1{
+  font-size:clamp(2.3rem,7.6vw,7.4rem);font-weight:700;text-transform:uppercase;
+  letter-spacing:-.025em;max-width:1100px;text-shadow:0 4px 40px rgba(2,5,14,.85);
+}
+.hero h1 .line{display:block;overflow:hidden}
+.hero h1 .line span{display:inline-block}
+.hero h1 .grad{background:linear-gradient(95deg,var(--cyan) 5%,var(--violet) 55%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;margin-top:2.2rem;flex-wrap:wrap}
+.hero-foot p{max-width:440px;color:var(--muted);font-size:.98rem;text-shadow:0 2px 18px rgba(2,5,14,.9)}
+.hero-actions{display:flex;gap:.9rem;flex-wrap:wrap}
+.btn{font-family:'Space Grotesk',sans-serif;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+  padding:1rem 2.1rem;border-radius:99px;transition:transform .3s,box-shadow .3s,background .3s,border-color .3s,color .3s;display:inline-block}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04101c;font-weight:600;box-shadow:0 0 36px rgba(56,225,255,.28)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(139,92,246,.5)}
 .btn-ghost{border:1px solid var(--line);color:var(--ink)}
 .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
-.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);color:var(--muted);font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;animation:bob 2.4s ease-in-out infinite}
-@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+.hero-meta{position:absolute;top:50%;right:var(--pad);transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:1.6rem;text-align:right;font-family:'Space Grotesk',sans-serif}
+.hero-meta .hm b{display:block;font-size:1.15rem;color:var(--ink);font-weight:600}
+.hero-meta .hm i{font-style:normal;font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+@media(max-width:880px){.hero-meta{display:none}}
+.scroll-hint{position:absolute;bottom:1.4rem;right:var(--pad);color:var(--muted);font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;
+  writing-mode:vertical-rl;display:flex;align-items:center;gap:.6rem}
+.scroll-hint::after{content:"";width:1px;height:42px;background:linear-gradient(180deg,var(--cyan),transparent);animation:drip 2s ease-in-out infinite}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}55%{transform:scaleY(1);transform-origin:top}56%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+@media(max-width:880px){.scroll-hint{display:none}}
 
-/* ---------- sections ---------- */
-section{padding:7rem clamp(1.2rem,6vw,5rem);max-width:1300px;margin:0 auto}
-.sec-head{max-width:720px;margin-bottom:3.5rem}
-.sec-head h2{font-size:clamp(1.9rem,4vw,3rem);margin:.8rem 0 1rem}
-.sec-head p{color:var(--muted)}
+/* ============ marquee ============ */
+.marquee{border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:1.05rem 0;overflow:hidden;background:rgba(2,5,14,.4);backdrop-filter:blur(6px)}
+.marquee-track{display:flex;gap:3.5rem;white-space:nowrap;will-change:transform;width:max-content}
+.marquee-track span{font-family:'Space Grotesk',sans-serif;font-size:.78rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:3.5rem}
+.marquee-track span::after{content:"✦";color:var(--cyan);font-size:.7rem}
 
-/* reveal */
-.reveal{opacity:0;transform:translateY(34px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
-.reveal.in{opacity:1;transform:none}
+/* ============ sections ============ */
+section{padding:clamp(5rem,12vh,8.5rem) var(--pad);max-width:1400px;margin:0 auto;position:relative}
+.sec-head{max-width:760px;margin-bottom:3.2rem}
+.sec-head .kicker{font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+.sec-head .kicker::before{content:"";width:30px;height:1px;background:var(--cyan)}
+.sec-head h2{font-size:clamp(2rem,5vw,3.6rem)}
+.sec-head p{color:var(--muted);margin-top:1.1rem;max-width:640px}
+.sec-index{position:absolute;top:clamp(5rem,12vh,8.5rem);right:var(--pad);font-family:'Space Grotesk',sans-serif;
+  font-size:.7rem;letter-spacing:.3em;color:var(--muted);opacity:.7}
+@media(max-width:880px){.sec-index{display:none}}
 
-/* ---------- kardashev ---------- */
-.kardashev{position:relative}
-.scale-track{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-top:2rem}
-.scale-node{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.8rem 1.5rem;backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:border-color .35s,transform .35s}
-.scale-node:hover{transform:translateY(-5px);border-color:rgba(34,211,238,.4)}
-.scale-node .type{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.scale-node h4{margin:.4rem 0 .6rem;font-size:1rem}
+/* ============ kardashev ============ */
+.scale-track{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem}
+.scale-node{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.9rem 1.5rem;
+  backdrop-filter:blur(14px);position:relative;overflow:hidden;transition:border-color .35s,transform .35s}
+.scale-node:hover{transform:translateY(-6px);border-color:rgba(56,225,255,.45)}
+.scale-node .type{font-family:'Space Grotesk',sans-serif;font-size:2.4rem;font-weight:700;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.scale-node h4{margin:.35rem 0 .6rem;font-size:1.02rem}
 .scale-node p{font-size:.84rem;color:var(--muted);line-height:1.6}
-.scale-node.active{border-color:rgba(251,191,36,.5);box-shadow:0 0 50px rgba(251,191,36,.08) inset}
-.scale-node.active::after{content:"WE ARE HERE";position:absolute;top:1rem;right:1rem;font-size:.58rem;letter-spacing:.2em;color:var(--gold);border:1px solid rgba(251,191,36,.4);border-radius:99px;padding:.25rem .6rem}
-.progress-wrap{margin-top:3rem;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:2rem;backdrop-filter:blur(12px)}
-.progress-label{display:flex;justify-content:space-between;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
-.progress-label b{color:var(--gold);font-size:1.1rem;letter-spacing:0}
-.bar{height:10px;border-radius:99px;background:rgba(139,155,184,.12);overflow:hidden;position:relative}
-.bar-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--gold));transition:width 2.2s cubic-bezier(.22,1,.36,1);box-shadow:0 0 18px rgba(34,211,238,.5)}
+.scale-node.active{border-color:rgba(255,201,77,.5);box-shadow:0 0 60px rgba(255,201,77,.07) inset}
+.scale-node.active::after{content:"WE ARE HERE";position:absolute;top:1rem;right:1rem;font-size:.56rem;letter-spacing:.2em;color:var(--gold);border:1px solid rgba(255,201,77,.4);border-radius:99px;padding:.25rem .6rem}
+.progress-wrap{margin-top:2.6rem;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:clamp(1.4rem,3vw,2.2rem);backdrop-filter:blur(14px)}
+.progress-label{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.progress-label b{font-family:'Space Grotesk',sans-serif;color:var(--gold);font-size:1.5rem;letter-spacing:0}
+.bar{height:8px;border-radius:99px;background:rgba(147,163,194,.12);overflow:hidden}
+.bar-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--gold));box-shadow:0 0 18px rgba(56,225,255,.5)}
 @media(max-width:980px){.scale-track{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.scale-track{grid-template-columns:1fr}}
+@media(max-width:540px){.scale-track{grid-template-columns:1fr}}
 
-/* ---------- divisions ---------- */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem}
+/* ============ divisions ============ */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
 .card{
-  background:var(--card);border:1px solid var(--line);border-radius:20px;
-  padding:2.2rem 1.9rem;backdrop-filter:blur(12px);
+  background:var(--card);border:1px solid var(--line);border-radius:22px;
+  padding:2.1rem 1.8rem;backdrop-filter:blur(14px);
   transition:transform .15s ease-out,border-color .35s,box-shadow .35s;
   transform-style:preserve-3d;will-change:transform;position:relative;overflow:hidden;
 }
-.card::before{content:"";position:absolute;inset:0;border-radius:20px;opacity:0;transition:opacity .4s;
-  background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%),rgba(34,211,238,.1),transparent 45%)}
+.card::before{content:"";position:absolute;inset:0;border-radius:22px;opacity:0;transition:opacity .4s;
+  background:radial-gradient(560px circle at var(--mx,50%) var(--my,50%),rgba(56,225,255,.12),transparent 45%)}
 .card:hover::before{opacity:1}
-.card:hover{border-color:rgba(34,211,238,.35);box-shadow:0 24px 60px rgba(3,7,18,.6)}
-.card .icon{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;margin-bottom:1.4rem;
-  background:linear-gradient(135deg,rgba(34,211,238,.15),rgba(139,92,246,.15));border:1px solid rgba(34,211,238,.25)}
-.card h3{font-size:1.18rem;margin-bottom:.7rem}
-.card p{font-size:.9rem;color:var(--muted)}
-.card .tags{margin-top:1.3rem;display:flex;flex-wrap:wrap;gap:.45rem}
-.card .tags span{font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(34,211,238,.25);border-radius:99px;padding:.28rem .7rem}
+.card:hover{border-color:rgba(56,225,255,.35);box-shadow:0 24px 60px rgba(2,5,14,.6)}
+.card .num{position:absolute;top:1.4rem;right:1.6rem;font-family:'Space Grotesk',sans-serif;font-size:.72rem;letter-spacing:.2em;color:var(--muted);opacity:.7}
+.card .icon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:1.4rem;margin-bottom:1.3rem;
+  background:linear-gradient(135deg,rgba(56,225,255,.15),rgba(139,92,246,.15));border:1px solid rgba(56,225,255,.25)}
+.card h3{font-size:1.15rem;margin-bottom:.65rem}
+.card p{font-size:.89rem;color:var(--muted)}
+.card .tags{margin-top:1.25rem;display:flex;flex-wrap:wrap;gap:.4rem}
+.card .tags span{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(56,225,255,.25);border-radius:99px;padding:.26rem .68rem}
 @media(max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.grid{grid-template-columns:1fr}}
 
-/* ---------- roadmap ---------- */
-.timeline{position:relative;margin-top:1rem;padding-left:2rem}
-.timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
-  background:linear-gradient(180deg,var(--cyan),var(--violet),var(--gold))}
-.tl-item{position:relative;padding:0 0 2.8rem 1.6rem}
-.tl-item:last-child{padding-bottom:0}
-.tl-item::before{content:"";position:absolute;left:-2rem;top:8px;width:16px;height:16px;border-radius:50%;
-  background:var(--bg);border:2px solid var(--cyan);box-shadow:0 0 14px rgba(34,211,238,.6)}
-.tl-item .when{font-family:'Space Grotesk',sans-serif;font-size:.74rem;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan)}
-.tl-item h4{font-size:1.15rem;margin:.35rem 0 .45rem}
-.tl-item p{color:var(--muted);font-size:.92rem;max-width:640px}
-
-/* ---------- stats ---------- */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-top:3rem}
-.stat{text-align:center;padding:2rem 1rem;border:1px solid var(--line);border-radius:18px;background:var(--card);backdrop-filter:blur(12px)}
-.stat .num{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;
+/* ============ stats ============ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;margin-top:2.6rem}
+.stat{text-align:center;padding:1.9rem .9rem;border:1px solid var(--line);border-radius:20px;background:var(--card);backdrop-filter:blur(14px)}
+.stat .num{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:700;
   background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.stat .lbl{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:.4rem}
+.stat .lbl{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:.4rem}
 @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
 
-/* ---------- quote ---------- */
-.quote{text-align:center;max-width:880px}
-.quote blockquote{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.4rem,3.2vw,2.2rem);font-weight:400;line-height:1.45}
-.quote blockquote .grad{background:linear-gradient(95deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.quote cite{display:block;margin-top:1.6rem;font-style:normal;font-size:.78rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted)}
+/* ============ roadmap ============ */
+.timeline{position:relative;padding-left:2rem}
+.timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--violet),var(--gold))}
+.tl-item{position:relative;padding:0 0 2.6rem 1.6rem}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-2rem;top:8px;width:16px;height:16px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--cyan);box-shadow:0 0 14px rgba(56,225,255,.6)}
+.tl-item .when{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan)}
+.tl-item h4{font-size:1.2rem;margin:.35rem 0 .45rem}
+.tl-item p{color:var(--muted);font-size:.92rem;max-width:620px}
 
-/* ---------- contact ---------- */
+/* ============ quote ============ */
+.quote{text-align:center;max-width:920px}
+.quote blockquote{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.5rem,3.6vw,2.5rem);font-weight:400;line-height:1.4}
+.quote blockquote .grad{background:linear-gradient(95deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.quote cite{display:block;margin-top:1.5rem;font-style:normal;font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
+
+/* ============ contact ============ */
 .contact-panel{
-  background:linear-gradient(135deg,rgba(34,211,238,.07),rgba(139,92,246,.07));
-  border:1px solid var(--line);border-radius:26px;padding:clamp(2.2rem,5vw,4.5rem);
-  text-align:center;backdrop-filter:blur(14px);position:relative;overflow:hidden;
+  background:linear-gradient(135deg,rgba(56,225,255,.07),rgba(139,92,246,.07));
+  border:1px solid var(--line);border-radius:28px;padding:clamp(2rem,5vw,4.5rem);
+  text-align:center;backdrop-filter:blur(16px);
 }
-.contact-panel h2{font-size:clamp(1.9rem,4vw,3rem);margin-bottom:1rem}
-.contact-panel p{color:var(--muted);max-width:560px;margin:0 auto 2.4rem}
-form{max-width:520px;margin:0 auto;display:grid;gap:.9rem;text-align:left}
+.contact-panel h2{font-size:clamp(1.9rem,4.4vw,3.2rem);margin-bottom:1rem}
+.contact-panel>p{color:var(--muted);max-width:540px;margin:0 auto 2.2rem}
+form{max-width:520px;margin:0 auto;display:grid;gap:.85rem;text-align:left}
 input,textarea{
-  width:100%;background:rgba(3,7,18,.55);border:1px solid var(--line);border-radius:12px;
-  padding:.95rem 1.15rem;color:var(--ink);font-family:'Inter',sans-serif;font-size:.92rem;transition:border-color .3s;
+  width:100%;background:rgba(2,5,14,.55);border:1px solid var(--line);border-radius:12px;
+  padding:.95rem 1.15rem;color:var(--ink);font-family:'Inter',sans-serif;font-size:16px;transition:border-color .3s;
 }
 input:focus,textarea:focus{outline:none;border-color:var(--cyan)}
 textarea{min-height:120px;resize:vertical}
 form .btn{border:none;cursor:pointer;width:100%}
-.form-note{font-size:.78rem;color:var(--muted);text-align:center;margin-top:.4rem}
+.form-note{font-size:.76rem;color:var(--muted);text-align:center;margin-top:.3rem}
 
-/* ---------- footer ---------- */
-footer{position:relative;z-index:2;border-top:1px solid var(--line);padding:3rem clamp(1.2rem,6vw,5rem);
-  display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center;justify-content:space-between;color:var(--muted);font-size:.82rem}
-footer .flinks{display:flex;gap:1.8rem;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase}
+/* ============ footer ============ */
+footer{position:relative;z-index:2;border-top:1px solid var(--line);padding:2.6rem var(--pad);
+  display:flex;flex-wrap:wrap;gap:1.4rem;align-items:center;justify-content:space-between;color:var(--muted);font-size:.8rem;
+  background:rgba(2,5,14,.5);backdrop-filter:blur(10px)}
+footer .flinks{display:flex;gap:1.6rem;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;flex-wrap:wrap}
 footer .flinks a:hover{color:var(--cyan)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body>
 
+<div id="loader">
+  <div class="word">INFINARA</div>
+  <div class="track"><div class="fill" id="loadFill"></div></div>
+  <div class="pct" id="loadPct">00</div>
+</div>
+
 <canvas id="scene"></canvas>
+<div class="vignette"></div>
 <div class="grain"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
 
 <nav id="nav">
   <a class="logo" href="#top"><span class="bolt">⚡</span>INFINARA<span class="v">&nbsp;VENTURES</span></a>
@@ -196,133 +282,166 @@ footer .flinks a:hover{color:var(--cyan)}
     <a href="#vision">Vision</a>
   </div>
   <a class="nav-cta" href="#contact">Partner With Us</a>
+  <button class="burger" id="burger" aria-label="Menu"><span></span><span></span></button>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mm-label">Navigate</div>
+  <a href="#kardashev">The Scale</a>
+  <a href="#divisions">Divisions</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#contact">Partner With Us</a>
+</div>
 
 <div class="content" id="top">
 
   <!-- HERO -->
-  <header class="hero">
-    <div class="kicker">Harnessing Planetary Energy for Infinite Progress</div>
-    <h1>Advancing Humanity Toward a <span class="grad">Type I Civilization</span></h1>
-    <p>Infinara Ventures accelerates humanity's transition to a planetary civilization through revolutionary energy technology, space exploration, bio-engineering, artificial intelligence, and global coordination.</p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="#contact">Partner With Us</a>
-      <a class="btn btn-ghost" href="#kardashev">Explore the Mission</a>
+  <header class="hero" id="hero">
+    <div class="kicker" data-hero-fade>Harnessing Planetary Energy for Infinite Progress</div>
+    <h1 aria-label="Advancing humanity toward a Type I civilization">
+      <span class="line"><span>Advancing</span></span>
+      <span class="line"><span>Humanity to a</span></span>
+      <span class="line"><span class="grad">Type&nbsp;I Civilization</span></span>
+    </h1>
+    <div class="hero-foot" data-hero-fade>
+      <p>Infinara Ventures accelerates humanity's transition to a planetary civilization through revolutionary energy technology, space exploration, bio-engineering, artificial intelligence, and global coordination.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#contact">Partner With Us</a>
+        <a class="btn btn-ghost" href="#kardashev">Explore the Mission</a>
+      </div>
     </div>
-    <div class="scroll-hint">Scroll ↓</div>
+    <div class="hero-meta" data-hero-fade>
+      <div class="hm"><b>73%</b><i>To Type I</i></div>
+      <div class="hm"><b>50 yrs</b><i>Horizon</i></div>
+      <div class="hm"><b>06</b><i>Divisions</i></div>
+    </div>
+    <div class="scroll-hint">Scroll</div>
   </header>
 
+  <!-- MARQUEE -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track" id="marqueeTrack">
+      <span>Energy Revolution</span><span>Space Exploration</span><span>Bio-Engineering</span>
+      <span>Artificial Intelligence</span><span>Education for All</span><span>Civilization Coordination</span>
+      <span>Energy Revolution</span><span>Space Exploration</span><span>Bio-Engineering</span>
+      <span>Artificial Intelligence</span><span>Education for All</span><span>Civilization Coordination</span>
+    </div>
+  </div>
+
   <!-- KARDASHEV -->
-  <section id="kardashev" class="kardashev">
-    <div class="sec-head reveal">
-      <div class="kicker" style="margin-bottom:.4rem">The Kardashev Scale</div>
-      <h2>Civilizations are measured by the energy they command.</h2>
-      <p>Proposed by astrophysicist Nikolai Kardashev, the scale classifies civilizations by their ability to harness energy. Humanity today sits below Type I — our mission is to close that gap within 50 years.</p>
+  <section id="kardashev">
+    <div class="sec-index">01 / 05</div>
+    <div class="sec-head">
+      <div class="kicker" data-reveal>The Kardashev Scale</div>
+      <h2 data-reveal>Civilizations are measured by the energy they command.</h2>
+      <p data-reveal>Proposed by astrophysicist Nikolai Kardashev, the scale classifies civilizations by their ability to harness energy. Humanity today sits below Type I — our mission is to close that gap within 50 years.</p>
     </div>
     <div class="scale-track">
-      <div class="scale-node active reveal">
+      <div class="scale-node active" data-reveal>
         <div class="type">0</div>
         <h4>Sub-Planetary</h4>
         <p>Energy drawn from raw materials — fossil fuels, early renewables. Fragmented coordination. This is humanity today.</p>
       </div>
-      <div class="scale-node reveal">
+      <div class="scale-node" data-reveal>
         <div class="type">I</div>
         <h4>Planetary</h4>
         <p>Full command of a planet's energy: fusion, global solar, weather and geo-systems. A unified, coordinated species.</p>
       </div>
-      <div class="scale-node reveal">
+      <div class="scale-node" data-reveal>
         <div class="type">II</div>
         <h4>Stellar</h4>
         <p>Harnessing the entire output of a star — Dyson-scale engineering, interplanetary industry and settlement.</p>
       </div>
-      <div class="scale-node reveal">
+      <div class="scale-node" data-reveal>
         <div class="type">III</div>
         <h4>Galactic</h4>
         <p>Commanding energy on the scale of an entire galaxy. The far horizon of intelligent life.</p>
       </div>
     </div>
-    <div class="progress-wrap reveal">
+    <div class="progress-wrap" data-reveal>
       <div class="progress-label"><span>Humanity's progress to Type I</span><b id="pct">0%</b></div>
-      <div class="bar"><div class="bar-fill" id="barfill" data-target="73"></div></div>
+      <div class="bar"><div class="bar-fill" id="barfill"></div></div>
     </div>
   </section>
 
   <!-- DIVISIONS -->
   <section id="divisions">
-    <div class="sec-head reveal">
-      <div class="kicker" style="margin-bottom:.4rem">Six Pillars</div>
-      <h2>The divisions driving the transition.</h2>
-      <p>Every venture we build, fund, or coordinate maps to one of six pillars required to reach planetary-scale capability.</p>
+    <div class="sec-index">02 / 05</div>
+    <div class="sec-head">
+      <div class="kicker" data-reveal>Six Pillars</div>
+      <h2 data-reveal>The divisions driving the transition.</h2>
+      <p data-reveal>Every venture we build, fund, or coordinate maps to one of six pillars required to reach planetary-scale capability.</p>
     </div>
     <div class="grid">
-      <div class="card reveal">
-        <div class="icon">⚡</div>
+      <div class="card" data-reveal>
+        <div class="num">01</div><div class="icon">⚡</div>
         <h3>Energy Revolution</h3>
         <p>Fusion power, advanced solar, and quantum storage — abundant clean energy is the foundation of a Type I civilization.</p>
         <div class="tags"><span>Fusion</span><span>Solar</span><span>Storage</span></div>
       </div>
-      <div class="card reveal">
-        <div class="icon">🚀</div>
+      <div class="card" data-reveal>
+        <div class="num">02</div><div class="icon">🚀</div>
         <h3>Space Exploration</h3>
         <p>Reusable launch systems, orbital infrastructure, and the first steps toward a multi-planetary economy.</p>
         <div class="tags"><span>Launch</span><span>Orbital</span><span>Settlement</span></div>
       </div>
-      <div class="card reveal">
-        <div class="icon">🧬</div>
+      <div class="card" data-reveal>
+        <div class="num">03</div><div class="icon">🧬</div>
         <h3>Bio-Engineering</h3>
         <p>Biotechnology that extends healthy human life, secures the food supply, and engineers resilience into our biosphere.</p>
         <div class="tags"><span>Longevity</span><span>Synthetic Bio</span><span>Food</span></div>
       </div>
-      <div class="card reveal">
-        <div class="icon">🤖</div>
+      <div class="card" data-reveal>
+        <div class="num">04</div><div class="icon">🤖</div>
         <h3>AI &amp; Advancement</h3>
         <p>Artificial intelligence as a force multiplier — accelerating research, automating industry, and amplifying human capability.</p>
         <div class="tags"><span>AGI Safety</span><span>Robotics</span><span>Research</span></div>
       </div>
-      <div class="card reveal">
-        <div class="icon">📡</div>
+      <div class="card" data-reveal>
+        <div class="num">05</div><div class="icon">📡</div>
         <h3>Education for All</h3>
         <p>Universal access to world-class knowledge. A planetary civilization requires a planet of educated minds.</p>
         <div class="tags"><span>Access</span><span>Open Knowledge</span><span>Skills</span></div>
       </div>
-      <div class="card reveal">
-        <div class="icon">🌐</div>
+      <div class="card" data-reveal>
+        <div class="num">06</div><div class="icon">🌐</div>
         <h3>Civilization Coordination</h3>
         <p>Global governance tooling, open protocols, and institutions that let eight billion people act as one species.</p>
         <div class="tags"><span>Protocols</span><span>Governance</span><span>Networks</span></div>
       </div>
     </div>
     <div class="stats">
-      <div class="stat reveal"><div class="num" data-count="73" data-suffix="%">0</div><div class="lbl">Progress to Type I</div></div>
-      <div class="stat reveal"><div class="num" data-count="50" data-suffix=" yrs">0</div><div class="lbl">Target Horizon</div></div>
-      <div class="stat reveal"><div class="num" data-count="6">0</div><div class="lbl">Core Divisions</div></div>
-      <div class="stat reveal"><div class="num" data-count="1" data-prefix="Type ">0</div><div class="lbl">Destination</div></div>
+      <div class="stat" data-reveal><div class="num" data-count="73" data-suffix="%">0</div><div class="lbl">Progress to Type I</div></div>
+      <div class="stat" data-reveal><div class="num" data-count="50" data-suffix=" yrs">0</div><div class="lbl">Target Horizon</div></div>
+      <div class="stat" data-reveal><div class="num" data-count="6">0</div><div class="lbl">Core Divisions</div></div>
+      <div class="stat" data-reveal><div class="num" data-count="1" data-prefix="Type ">0</div><div class="lbl">Destination</div></div>
     </div>
   </section>
 
   <!-- ROADMAP -->
   <section id="roadmap">
-    <div class="sec-head reveal">
-      <div class="kicker" style="margin-bottom:.4rem">Roadmap</div>
-      <h2>A 50-year transition, in deliberate phases.</h2>
+    <div class="sec-index">03 / 05</div>
+    <div class="sec-head">
+      <div class="kicker" data-reveal>Roadmap</div>
+      <h2 data-reveal>A 50-year transition, in deliberate phases.</h2>
     </div>
     <div class="timeline">
-      <div class="tl-item reveal">
+      <div class="tl-item" data-reveal>
         <div class="when">Phase 01 — Now to 2030</div>
         <h4>Foundation</h4>
         <p>Back breakthrough energy and AI ventures, build the coordination network, and establish open research partnerships across the six pillars.</p>
       </div>
-      <div class="tl-item reveal">
+      <div class="tl-item" data-reveal>
         <div class="when">Phase 02 — 2030 to 2040</div>
         <h4>Acceleration</h4>
         <p>Commercial fusion and planetary-scale solar come online. Orbital industry matures. Education access approaches universality.</p>
       </div>
-      <div class="tl-item reveal">
+      <div class="tl-item" data-reveal>
         <div class="when">Phase 03 — 2040 to 2060</div>
         <h4>Integration</h4>
         <p>Energy abundance reshapes every industry. Global coordination systems mature. Bio-engineering extends healthy human life at scale.</p>
       </div>
-      <div class="tl-item reveal">
+      <div class="tl-item" data-reveal>
         <div class="when">Phase 04 — 2060 to 2075</div>
         <h4>Type I Threshold</h4>
         <p>Humanity commands the full energy budget of Earth — a unified, sustainable, multi-planetary species. The transition is complete.</p>
@@ -332,8 +451,8 @@ footer .flinks a:hover{color:var(--cyan)}
 
   <!-- VISION -->
   <section id="vision" class="quote">
-    <div class="reveal">
-      <div class="kicker" style="justify-content:center">Our Conviction</div>
+    <div class="sec-index">04 / 05</div>
+    <div data-reveal>
       <blockquote>"The transition to a Type I civilization is not inevitable — it is <span class="grad">engineered</span>. Someone has to build it. That is the work of Infinara Ventures."</blockquote>
       <cite>— Infinara Ventures</cite>
     </div>
@@ -341,7 +460,8 @@ footer .flinks a:hover{color:var(--cyan)}
 
   <!-- CONTACT -->
   <section id="contact">
-    <div class="contact-panel reveal">
+    <div class="sec-index">05 / 05</div>
+    <div class="contact-panel" data-reveal>
       <h2>Partner With Us</h2>
       <p>Founders, researchers, investors, and institutions building toward planetary-scale capability — we want to hear from you.</p>
       <form id="contactForm" action="https://formsubmit.co/mrextuber@gmail.com" method="POST">
@@ -369,117 +489,203 @@ footer .flinks a:hover{color:var(--cyan)}
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
 </script>
+
 <script type="module">
 import * as THREE from 'three';
+gsap.registerPlugin(ScrollTrigger);
 
+const isMobile = matchMedia('(max-width: 880px)').matches;
+const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= renderer / scene ================= */
 const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+/* start conservative; adaptive quality raises/lowers DPR from measured frame times */
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1));
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x030712, 0.055);
-const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 200);
-camera.position.set(0, 0.4, 7.5);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 400);
+camera.position.set(0, 0, 9);
 
-/* ---- starfield ---- */
-function makeStars(count, size, spread, color) {
-  const g = new THREE.BufferGeometry();
-  const pos = new Float32Array(count * 3);
-  for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * spread;
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const m = new THREE.PointsMaterial({ size, color, transparent: true, opacity: 0.85, depthWrite: false });
-  return new THREE.Points(g, m);
-}
-const stars1 = makeStars(2600, 0.045, 90, 0xbfd8ff);
-const stars2 = makeStars(1200, 0.08, 70, 0x8b5cf6);
-const stars3 = makeStars(800, 0.06, 60, 0x22d3ee);
-scene.add(stars1, stars2, stars3);
+/* lights: sun + faint fill */
+const sun = new THREE.DirectionalLight(0xfff2dd, 2.6);
+sun.position.set(-6, 1.5, 4);
+scene.add(sun);
+scene.add(new THREE.AmbientLight(0x223355, 0.55));
 
-/* ---- energy planet: core with fresnel glow shader ---- */
-const coreUniforms = {
-  uTime: { value: 0 },
-  uColorA: { value: new THREE.Color(0x22d3ee) },
-  uColorB: { value: new THREE.Color(0x8b5cf6) },
+/* ================= loading manager / preloader ================= */
+const loadFill = document.getElementById('loadFill');
+const loadPct = document.getElementById('loadPct');
+const manager = new THREE.LoadingManager();
+let introPlayed = false;
+manager.onProgress = (url, loaded, total) => {
+  const p = Math.round((loaded / total) * 100);
+  loadFill.style.width = p + '%';
+  loadPct.textContent = String(p).padStart(2, '0');
 };
-const core = new THREE.Mesh(
-  new THREE.IcosahedronGeometry(1.55, 24),
+manager.onLoad = () => { if (!introPlayed) { introPlayed = true; playIntro(); } };
+manager.onError = () => { if (!introPlayed) { introPlayed = true; playIntro(); } };
+/* safety: never trap the user on the loader */
+setTimeout(() => { if (!introPlayed) { introPlayed = true; playIntro(); } }, 7000);
+
+const texLoader = new THREE.TextureLoader(manager);
+texLoader.setCrossOrigin('anonymous');
+const TEX = 'https://unpkg.com/three-globe@2.31.0/example/img/';
+const dayMap = texLoader.load(TEX + 'earth-blue-marble.jpg');
+const nightMap = texLoader.load(TEX + 'earth-night.jpg');
+const bumpMap = texLoader.load(TEX + 'earth-topology.png');
+dayMap.colorSpace = THREE.SRGBColorSpace;
+nightMap.colorSpace = THREE.SRGBColorSpace;
+
+/* ================= earth group ================= */
+const earthGroup = new THREE.Group();
+scene.add(earthGroup);
+const EARTH_R = 2.45;
+
+const earth = new THREE.Mesh(
+  new THREE.SphereGeometry(EARTH_R, 64, 64),
+  new THREE.MeshStandardMaterial({
+    map: dayMap,
+    bumpMap: bumpMap,
+    bumpScale: 0.6,
+    emissiveMap: nightMap,
+    emissive: new THREE.Color(0xffd9a0),
+    emissiveIntensity: 1.35,
+    roughness: 0.9,
+    metalness: 0.05,
+  })
+);
+earth.rotation.z = THREE.MathUtils.degToRad(-23.4); /* axial tilt */
+earthGroup.add(earth);
+
+/* atmosphere: additive fresnel shell */
+const atmosphere = new THREE.Mesh(
+  new THREE.SphereGeometry(EARTH_R * 1.055, 48, 48),
   new THREE.ShaderMaterial({
-    uniforms: coreUniforms,
     transparent: true,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    uniforms: { uIntensity: { value: 1.0 } },
     vertexShader: `
-      varying vec3 vN; varying vec3 vP; varying vec3 vWorld;
-      uniform float uTime;
+      varying vec3 vN; varying vec3 vW;
       void main(){
         vN = normalize(normalMatrix * normal);
-        vP = position;
-        vec3 p = position + normal * 0.035 * sin(uTime*1.4 + position.y*5.0 + position.x*3.0);
-        vec4 wp = modelMatrix * vec4(p,1.0);
-        vWorld = wp.xyz;
+        vec4 wp = modelMatrix * vec4(position,1.0);
+        vW = wp.xyz;
         gl_Position = projectionMatrix * viewMatrix * wp;
       }`,
     fragmentShader: `
-      varying vec3 vN; varying vec3 vP; varying vec3 vWorld;
-      uniform float uTime; uniform vec3 uColorA; uniform vec3 uColorB;
+      varying vec3 vN; varying vec3 vW;
+      uniform float uIntensity;
       void main(){
-        vec3 viewDir = normalize(cameraPosition - vWorld);
-        float fres = pow(1.0 - max(dot(viewDir, normalize(vN)), 0.0), 2.2);
-        float bands = 0.5 + 0.5 * sin(vP.y * 9.0 + uTime * 0.8);
-        vec3 col = mix(uColorA, uColorB, bands);
-        float alpha = 0.18 + fres * 0.95;
-        gl_FragColor = vec4(col * (0.45 + fres * 1.6), alpha);
+        vec3 viewDir = normalize(cameraPosition - vW);
+        float rim = pow(0.68 - dot(viewDir, normalize(vN)), 4.0);
+        vec3 col = mix(vec3(0.13,0.55,1.0), vec3(0.35,0.85,1.0), rim);
+        gl_FragColor = vec4(col, rim * 0.95 * uIntensity);
       }`,
   })
 );
-scene.add(core);
+earthGroup.add(atmosphere);
 
-/* wireframe shell */
-const shell = new THREE.Mesh(
-  new THREE.IcosahedronGeometry(1.85, 2),
-  new THREE.MeshBasicMaterial({ color: 0x22d3ee, wireframe: true, transparent: true, opacity: 0.14 })
+/* inner rim glow on the lit edge */
+const innerGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(EARTH_R * 1.004, 48, 48),
+  new THREE.ShaderMaterial({
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    vertexShader: `
+      varying vec3 vN; varying vec3 vW;
+      void main(){
+        vN = normalize(normalMatrix * normal);
+        vec4 wp = modelMatrix * vec4(position,1.0);
+        vW = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      varying vec3 vN; varying vec3 vW;
+      void main(){
+        vec3 viewDir = normalize(cameraPosition - vW);
+        float fres = pow(1.0 - max(dot(viewDir, normalize(vN)), 0.0), 4.0);
+        gl_FragColor = vec4(vec3(0.3,0.7,1.0), fres * 0.55);
+      }`,
+  })
 );
-scene.add(shell);
+earthGroup.add(innerGlow);
 
-/* orbital rings */
-const rings = new THREE.Group();
-[[2.6, 0x22d3ee, 0.5], [3.1, 0x8b5cf6, -0.9], [3.7, 0xfbbf24, 1.7]].forEach(([r, c, tilt]) => {
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(r, 0.012, 8, 220),
-    new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.35 })
-  );
-  ring.rotation.x = Math.PI / 2 + tilt * 0.25;
-  ring.rotation.y = tilt * 0.4;
-  rings.add(ring);
-});
-scene.add(rings);
+/* clouds (graceful: layer simply stays empty if texture fails) */
+const cloudLoader = new THREE.TextureLoader();
+cloudLoader.setCrossOrigin('anonymous');
+cloudLoader.load(
+  'https://raw.githubusercontent.com/turban/webgl-earth/master/images/fair_clouds_4k.png',
+  (cloudTex) => {
+    const clouds = new THREE.Mesh(
+      new THREE.SphereGeometry(EARTH_R * 1.012, 48, 48),
+      new THREE.MeshStandardMaterial({ map: cloudTex, transparent: true, opacity: 0.55, depthWrite: false })
+    );
+    clouds.name = 'clouds';
+    earthGroup.add(clouds);
+  },
+  undefined,
+  () => {}
+);
 
-/* orbiting energy particles */
-const orbCount = 420;
-const orbGeo = new THREE.BufferGeometry();
-const orbPos = new Float32Array(orbCount * 3);
-const orbData = [];
-for (let i = 0; i < orbCount; i++) {
-  orbData.push({
-    r: 2.3 + Math.random() * 1.8,
-    a: Math.random() * Math.PI * 2,
-    s: 0.15 + Math.random() * 0.45,
-    y: (Math.random() - 0.5) * 1.6,
-  });
+/* ================= starfield + shooting particles ================= */
+function makeStars(count, size, spread, color, opacity) {
+  const g = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    /* keep a hole around the earth */
+    let x, y, z, d;
+    do {
+      x = (Math.random() - 0.5) * spread;
+      y = (Math.random() - 0.5) * spread;
+      z = (Math.random() - 0.5) * spread;
+      d = Math.sqrt(x * x + y * y + z * z);
+    } while (d < 12);
+    pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size, color, transparent: true, opacity, depthWrite: false }));
 }
-orbGeo.setAttribute('position', new THREE.BufferAttribute(orbPos, 3));
-const orbs = new THREE.Points(orbGeo, new THREE.PointsMaterial({ size: 0.05, color: 0x67e8f9, transparent: true, opacity: 0.9, depthWrite: false }));
-scene.add(orbs);
+const stars1 = makeStars(isMobile ? 1200 : 2200, 0.05, 130, 0xcfe0ff, 0.9);
+const stars2 = makeStars(isMobile ? 400 : 800, 0.09, 110, 0x8b5cf6, 0.6);
+const stars3 = makeStars(isMobile ? 350 : 650, 0.07, 100, 0x38e1ff, 0.7);
+scene.add(stars1, stars2, stars3);
 
-/* ---- interaction state ---- */
-let mouseX = 0, mouseY = 0, scrollT = 0;
+/* satellite ring of drifting points around earth */
+const satCount = isMobile ? 120 : 260;
+const satGeo = new THREE.BufferGeometry();
+satGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(satCount * 3), 3));
+const satData = Array.from({ length: satCount }, () => ({
+  r: EARTH_R * (1.25 + Math.random() * 0.65),
+  a: Math.random() * Math.PI * 2,
+  s: 0.05 + Math.random() * 0.22,
+  incl: (Math.random() - 0.5) * 0.9,
+}));
+const sats = new THREE.Points(satGeo, new THREE.PointsMaterial({ size: 0.035, color: 0x9fefff, transparent: true, opacity: 0.85, depthWrite: false }));
+earthGroup.add(sats);
+
+/* ================= layout: earth position per breakpoint ================= */
+/* Desktop hero: earth right-of-center. Mobile hero: earth upper-center, smaller. */
+const L = isMobile
+  ? { heroX: 0, heroY: 1.55, heroScale: 0.78, camZ: 9.5 }
+  : { heroX: 2.9, heroY: 0.25, heroScale: 1, camZ: 9 };
+earthGroup.position.set(L.heroX, L.heroY - 4.5, 0); /* start low; intro floats it up */
+earthGroup.scale.setScalar(L.heroScale * 0.85);
+camera.position.z = L.camZ;
+
+/* ================= render loop ================= */
+let mouseX = 0, mouseY = 0;
 addEventListener('pointermove', (e) => {
   mouseX = (e.clientX / innerWidth - 0.5) * 2;
   mouseY = (e.clientY / innerHeight - 0.5) * 2;
-});
-addEventListener('scroll', () => {
-  scrollT = scrollY / Math.max(1, document.body.scrollHeight - innerHeight);
-});
+}, { passive: true });
 
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
@@ -489,103 +695,194 @@ function resize() {
 addEventListener('resize', resize);
 resize();
 
+/* adaptive quality: sample frame times, step DPR up on fast GPUs, down on slow ones */
+let frameCount = 0, frameAccum = 0, lastFrame = performance.now(), qualityLocked = false;
+function adaptQuality(now) {
+  if (qualityLocked) return;
+  frameAccum += now - lastFrame;
+  lastFrame = now;
+  if (++frameCount < 90) return;
+  const avg = frameAccum / frameCount;
+  frameCount = 0; frameAccum = 0;
+  const cur = renderer.getPixelRatio();
+  if (avg < 17 && cur < Math.min(devicePixelRatio, 2)) {
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  } else if (avg > 40 && cur > 0.7) {
+    renderer.setPixelRatio(0.7);
+    qualityLocked = true; /* weak GPU — settle here */
+  } else {
+    qualityLocked = true;
+  }
+}
+
 const clock = new THREE.Clock();
 function tick() {
+  adaptQuality(performance.now());
   const t = clock.getElapsedTime();
-  coreUniforms.uTime.value = t;
+  earth.rotation.y = t * 0.035;
+  const clouds = earthGroup.getObjectByName('clouds');
+  if (clouds) clouds.rotation.y = t * 0.048;
+  stars1.rotation.y = t * 0.0035;
+  stars2.rotation.y = -t * 0.005;
+  stars3.rotation.x = t * 0.0025;
 
-  core.rotation.y = t * 0.12;
-  shell.rotation.y = -t * 0.07;
-  shell.rotation.x = Math.sin(t * 0.18) * 0.12;
-  rings.rotation.y = t * 0.05;
-  stars1.rotation.y = t * 0.004;
-  stars2.rotation.y = -t * 0.006;
-  stars3.rotation.x = t * 0.003;
-
-  const p = orbGeo.attributes.position.array;
-  for (let i = 0; i < orbCount; i++) {
-    const d = orbData[i];
-    const a = d.a + t * d.s;
+  const p = satGeo.attributes.position.array;
+  for (let i = 0; i < satCount; i++) {
+    const d = satData[i], a = d.a + t * d.s;
     p[i * 3] = Math.cos(a) * d.r;
-    p[i * 3 + 1] = d.y + Math.sin(t * 0.7 + i) * 0.12;
+    p[i * 3 + 1] = Math.sin(a * 0.7) * d.r * d.incl * 0.4;
     p[i * 3 + 2] = Math.sin(a) * d.r;
   }
-  orbGeo.attributes.position.needsUpdate = true;
+  satGeo.attributes.position.needsUpdate = true;
 
-  /* scroll-driven camera journey + mouse parallax */
-  const targetZ = 7.5 - scrollT * 2.2;
-  const targetY = 0.4 + scrollT * 1.6;
-  camera.position.z += (targetZ - camera.position.z) * 0.04;
-  camera.position.y += (targetY - camera.position.y) * 0.04;
-  camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.03;
+  /* gentle mouse parallax (desktop) */
+  if (!isMobile) {
+    camera.position.x += (mouseX * 0.35 - camera.position.x) * 0.04;
+    camera.position.y += (-mouseY * 0.25 - camera.position.y) * 0.04;
+  }
   camera.lookAt(0, 0, 0);
-  camera.rotation.z = scrollT * 0.12;
 
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
 }
 tick();
+
+/* ================= intro ================= */
+function playIntro() {
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+  tl.to('#loader', { opacity: 0, duration: 0.6, delay: 0.25, onComplete: () => document.getElementById('loader').remove() })
+    .to(earthGroup.position, { x: L.heroX, y: L.heroY, duration: 2.2, ease: 'power2.out' }, '-=0.3')
+    .to(earthGroup.scale, { x: L.heroScale, y: L.heroScale, z: L.heroScale, duration: 2.2, ease: 'power2.out' }, '<')
+    .from('.hero h1 .line span', { yPercent: 110, duration: 1.1, stagger: 0.12 }, '-=1.7')
+    .from('[data-hero-fade]', { opacity: 0, y: 24, duration: 0.9, stagger: 0.1 }, '-=0.7')
+    .from('nav', { opacity: 0, y: -16, duration: 0.7 }, '-=0.8');
+  buildScroll();
+}
+
+/* ================= scroll choreography ================= */
+function buildScroll() {
+  if (prefersReduced) {
+    document.querySelectorAll('[data-reveal]').forEach((el) => (el.style.opacity = 1));
+    return;
+  }
+
+  /* earth journey across the page (scrubbed) */
+  const j = gsap.timeline({
+    scrollTrigger: { trigger: '.content', start: 'top top', end: 'bottom bottom', scrub: 1.2 },
+  });
+  if (isMobile) {
+    j.to(earthGroup.position, { y: 0.4, x: 0 }, 0)
+     .to(earthGroup.scale, { x: 1.15, y: 1.15, z: 1.15 }, 0)
+     .to(earthGroup.position, { y: -0.4 }, 0.35)
+     .to(earthGroup.scale, { x: 0.9, y: 0.9, z: 0.9 }, 0.35)
+     .to(earthGroup.position, { y: 0.6 }, 0.75)
+     .to(earthGroup.scale, { x: 1.5, y: 1.5, z: 1.5 }, 0.75);
+  } else {
+    j.to(earthGroup.position, { x: -3.4, y: 0.1 }, 0)          /* kardashev: left */
+     .to(earthGroup.scale, { x: 1.18, y: 1.18, z: 1.18 }, 0)
+     .to(earthGroup.position, { x: 3.2, y: -0.2 }, 0.3)        /* divisions: right */
+     .to(earthGroup.scale, { x: 0.95, y: 0.95, z: 0.95 }, 0.3)
+     .to(earthGroup.position, { x: -3.0, y: 0.3 }, 0.55)       /* roadmap: left */
+     .to(earthGroup.position, { x: 0, y: 0.15 }, 0.8)          /* vision/contact: center, close-up */
+     .to(earthGroup.scale, { x: 1.65, y: 1.65, z: 1.65 }, 0.8);
+  }
+  /* slow extra spin tied to scroll + sun swings around = day/night shift */
+  j.to(earth.rotation, { y: '+=2.4' }, 0);
+  j.to(sun.position, { x: 6, z: -2 }, 0.55);
+  j.to(atmosphere.material.uniforms.uIntensity, { value: 1.6 }, 0.75);
+
+  /* generic reveals */
+  gsap.utils.toArray('[data-reveal]').forEach((el) => {
+    gsap.from(el, {
+      opacity: 0, y: 36, duration: 1, ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 86%' },
+    });
+  });
+
+  /* progress bar + % counter */
+  ScrollTrigger.create({
+    trigger: '#barfill', start: 'top 85%', once: true,
+    onEnter: () => {
+      gsap.to('#barfill', { width: '73%', duration: 2, ease: 'power3.inOut' });
+      const o = { v: 0 };
+      gsap.to(o, { v: 73, duration: 2, ease: 'power3.inOut',
+        onUpdate: () => (document.getElementById('pct').textContent = Math.round(o.v) + '%') });
+    },
+  });
+
+  /* stat counters */
+  gsap.utils.toArray('.num[data-count]').forEach((el) => {
+    ScrollTrigger.create({
+      trigger: el, start: 'top 88%', once: true,
+      onEnter: () => {
+        const target = +el.dataset.count, pre = el.dataset.prefix || '', suf = el.dataset.suffix || '';
+        const o = { v: 0 };
+        gsap.to(o, { v: target, duration: 1.6, ease: 'power2.out',
+          onUpdate: () => (el.textContent = pre + Math.round(o.v) + suf) });
+      },
+    });
+  });
+
+  /* marquee drift */
+  gsap.to('#marqueeTrack', { xPercent: -50, ease: 'none', duration: 28, repeat: -1 });
+}
 </script>
 
 <script>
-/* nav */
+/* ================= UI (non-3D) ================= */
 const nav = document.getElementById('nav');
 addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
 document.getElementById('year').textContent = new Date().getFullYear();
 
-/* reveal on scroll */
-const io = new IntersectionObserver((entries) => {
-  entries.forEach((e, i) => {
-    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+/* mobile menu */
+const burger = document.getElementById('burger');
+burger.addEventListener('click', () => document.body.classList.toggle('menu-open'));
+document.querySelectorAll('.mobile-menu a').forEach((a) =>
+  a.addEventListener('click', () => document.body.classList.remove('menu-open')));
+
+/* smooth anchor scroll */
+document.querySelectorAll('a[href^="#"]').forEach((a) => {
+  a.addEventListener('click', (e) => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth' });
   });
-}, { threshold: 0.12 });
-document.querySelectorAll('.reveal').forEach((el, i) => {
-  el.style.transitionDelay = (i % 4) * 0.08 + 's';
-  io.observe(el);
 });
 
-/* progress bar */
-const bar = document.getElementById('barfill');
-const pct = document.getElementById('pct');
-new IntersectionObserver((entries, obs) => {
-  if (!entries[0].isIntersecting) return;
-  obs.disconnect();
-  const target = +bar.dataset.target;
-  bar.style.width = target + '%';
-  const t0 = performance.now();
-  (function step(now) {
-    const k = Math.min(1, (now - t0) / 2200);
-    pct.textContent = Math.round(target * (1 - Math.pow(1 - k, 3))) + '%';
-    if (k < 1) requestAnimationFrame(step);
-  })(t0);
-}, { threshold: 0.4 }).observe(bar);
-
-/* counters */
-document.querySelectorAll('.num[data-count]').forEach((el) => {
-  new IntersectionObserver((entries, obs) => {
-    if (!entries[0].isIntersecting) return;
-    obs.disconnect();
-    const target = +el.dataset.count, pre = el.dataset.prefix || '', suf = el.dataset.suffix || '';
-    const t0 = performance.now();
-    (function step(now) {
-      const k = Math.min(1, (now - t0) / 1800);
-      el.textContent = pre + Math.round(target * (1 - Math.pow(1 - k, 3))) + suf;
-      if (k < 1) requestAnimationFrame(step);
-    })(t0);
-  }, { threshold: 0.5 }).observe(el);
-});
-
-/* 3D tilt on cards */
-document.querySelectorAll('.card').forEach((card) => {
-  card.addEventListener('pointermove', (e) => {
-    const r = card.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-    card.style.setProperty('--mx', x * 100 + '%');
-    card.style.setProperty('--my', y * 100 + '%');
-    card.style.transform = `perspective(800px) rotateY(${(x - 0.5) * 8}deg) rotateX(${(0.5 - y) * 8}deg) translateY(-4px)`;
+/* custom cursor (desktop pointers only) */
+if (matchMedia('(pointer:fine)').matches) {
+  const dot = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let rx = -100, ry = -100, tx = -100, ty = -100;
+  addEventListener('pointermove', (e) => {
+    tx = e.clientX; ty = e.clientY;
+    dot.style.transform = `translate(${tx - 5}px,${ty - 5}px)`;
+  }, { passive: true });
+  (function follow() {
+    rx += (tx - rx) * 0.16; ry += (ty - ry) * 0.16;
+    ring.style.transform = `translate(${rx - 18}px,${ry - 18}px)`;
+    requestAnimationFrame(follow);
+  })();
+  document.querySelectorAll('a,button,.card').forEach((el) => {
+    el.addEventListener('pointerenter', () => document.body.classList.add('link-hover'));
+    el.addEventListener('pointerleave', () => document.body.classList.remove('link-hover'));
   });
-  card.addEventListener('pointerleave', () => { card.style.transform = ''; });
-});
+}
+
+/* 3D tilt on cards (desktop only) */
+if (matchMedia('(pointer:fine)').matches) {
+  document.querySelectorAll('.card').forEach((card) => {
+    card.addEventListener('pointermove', (e) => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      card.style.setProperty('--mx', x * 100 + '%');
+      card.style.setProperty('--my', y * 100 + '%');
+      card.style.transform = `perspective(800px) rotateY(${(x - 0.5) * 8}deg) rotateX(${(0.5 - y) * 8}deg) translateY(-4px)`;
+    });
+    card.addEventListener('pointerleave', () => { card.style.transform = ''; });
+  });
+}
 </script>
 </body>
 </html>
