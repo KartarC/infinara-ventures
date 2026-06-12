@@ -15,6 +15,7 @@ Marketing/vision site for Infinara Ventures (https://infinaraventures.com) — "
 
 ## Pages
 - `index.html` — Hero → Kardashev Scale (73% bar) → Seven Divisions (Energy, Space, Bio, AI, Education, Coordination, Future Industrial Manufacturing → links to portfolio) → Roadmap → Vision → Contact
+  - Scroll story: Earth evolves through 4 eras as you scroll (S.t thresholds 0/.28/.52/.78): satellites on linear orbit lines → Earth space stations → Moon (textured, orbits in background) gains outposts → Type I utopia (energy grid, golden mega-ring, Earth↔Moon travel lane with two-way ship traffic, brighter city lights). "Planetary Status" HUD (bottom-left) narrates eras 2026/2040/2060/2075 and goes gold at utopia.
 - `portfolio.html` — companies under the belt, grouped: Industrial Manufacturing (Machinist's Vault, Wavlon Lasers), Aerospace (SkyLife Aircrafts), AI (Axon AI — text monogram, no logo asset exists). Logos in `assets/` on white plates. Lightweight starfield bg.
 - `cornerstones.html` — Nine Cornerstones interactive 3D experience: scroll-driven intro narrative → energy Earth → 9 crystalline pillars rise in a ring around a glowing nucleus; hover/click pillars → info cards; all 9 viewed → grand finale (TYPE I CIVILIZATION, fade to final statement). UnrealBloomPass via three/addons importmap; adaptive quality drops bloom then DPR on weak GPUs.
 

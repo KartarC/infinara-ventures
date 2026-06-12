@@ -85,6 +85,25 @@ img{max-width:100%}
   font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(5rem,14vw,11rem);line-height:1;
   color:transparent;-webkit-text-stroke:1px rgba(141,160,191,.14);user-select:none;pointer-events:none}
 
+/* ============ planetary status HUD ============ */
+.earth-hud{position:fixed;left:1.4rem;bottom:1.4rem;z-index:30;
+  background:rgba(2,5,14,.62);border:1px solid var(--line);border-radius:16px;
+  padding:.9rem 1.1rem;backdrop-filter:blur(14px);min-width:230px;
+  font-family:'Space Grotesk',sans-serif;pointer-events:none;transition:border-color .5s}
+.earth-hud .ehk{font-size:.56rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
+.earth-hud .ehera{font-size:1.35rem;font-weight:700;color:var(--cyan);line-height:1.2;margin:.15rem 0;transition:color .5s}
+.earth-hud .ehstage{font-family:'Inter',sans-serif;font-size:.72rem;color:var(--muted);max-width:230px;line-height:1.45}
+.earth-hud .ehdots{display:flex;gap:.4rem;margin-top:.6rem}
+.earth-hud .ehdots i{height:3px;flex:1;border-radius:99px;background:rgba(141,160,191,.25);transition:background .5s,box-shadow .5s}
+.earth-hud .ehdots i.on{background:var(--cyan);box-shadow:0 0 8px rgba(56,225,255,.6)}
+.earth-hud.utopia{border-color:rgba(255,215,106,.45)}
+.earth-hud.utopia .ehera{color:#ffd76a}
+.earth-hud.utopia .ehdots i.on{background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.6)}
+.eh-fade{animation:ehfade .5s ease}
+@keyframes ehfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:880px){.earth-hud{left:.9rem;bottom:.9rem;min-width:0;padding:.7rem .9rem}
+  .earth-hud .ehera{font-size:1.05rem}.earth-hud .ehstage{font-size:.64rem;max-width:170px}}
+
 /* ============ cursor (desktop only) ============ */
 .cursor{position:fixed;z-index:99;top:0;left:0;width:10px;height:10px;border-radius:50%;
   background:var(--cyan);pointer-events:none;mix-blend-mode:screen;display:none}
@@ -293,6 +312,12 @@ footer .flinks a:hover{color:var(--cyan)}
 <div class="vignette"></div>
 <div class="grain"></div>
 <div class="progress-line"><span id="scrollProgress"></span></div>
+<div class="earth-hud" id="earthHud" aria-hidden="true">
+  <div class="ehk">Planetary Status</div>
+  <div class="ehera" id="ehEra">2026</div>
+  <div class="ehstage" id="ehStage">Type 0.73 — first satellite constellations circle the Earth.</div>
+  <div class="ehdots"><i class="on"></i><i></i><i></i><i></i></div>
+</div>
 <aside class="journey-nav" id="journeyNav" aria-label="Page sections">
   <a href="#hero" data-section="hero"><span class="jlabel">Start</span><span class="jdot"></span></a>
   <a href="#kardashev" data-section="kardashev"><span class="jlabel">The Scale</span><span class="jdot"></span></a>
@@ -701,18 +726,124 @@ const stars2 = makeStars(isMobile ? 400 : 800, 0.09, 110, 0x9fb6d8, 0.5);
 const stars3 = makeStars(isMobile ? 350 : 650, 0.07, 100, 0xeaf4ff, 0.65);
 scene.add(stars1, stars2, stars3);
 
-/* satellite ring of drifting points around earth */
-const satCount = isMobile ? 120 : 260;
-const satGeo = new THREE.BufferGeometry();
-satGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(satCount * 3), 3));
-const satData = Array.from({ length: satCount }, () => ({
-  r: EARTH_R * (1.25 + Math.random() * 0.65),
-  a: Math.random() * Math.PI * 2,
-  s: 0.05 + Math.random() * 0.22,
-  incl: (Math.random() - 0.5) * 0.9,
-}));
-const sats = new THREE.Points(satGeo, new THREE.PointsMaterial({ size: 0.035, color: 0x9fefff, transparent: true, opacity: 0.85, depthWrite: false }));
-earthGroup.add(sats);
+/* ================= civilization stages (scroll story) =================
+   S.t (0→1 page scroll) drives the era:
+   0.00 present day — first constellations     0.28 orbital expansion — stations
+   0.52 lunar gateway — Moon outposts          0.78 Type I utopia — planetary grid */
+const S = { t: 0 };
+const stageA = (start) => Math.min(1, Math.max(0, (S.t - start) / 0.1));
+
+/* --- satellites on proper linear orbit lines --- */
+const ORBITS = [
+  { r: 3.00, tiltX: 0.45,  tiltZ: 0.20, sats: 5, speed: 0.22, stage: 0 },
+  { r: 3.25, tiltX: -0.35, tiltZ: -0.5, sats: 4, speed: 0.18, stage: 0 },
+  { r: 3.55, tiltX: 0.95,  tiltZ: 0.3,  sats: 6, speed: 0.15, stage: 0.28 },
+  { r: 3.80, tiltX: -0.75, tiltZ: 0.6,  sats: 5, speed: 0.13, stage: 0.28 },
+  { r: 4.10, tiltX: 0.15,  tiltZ: -0.9, sats: 7, speed: 0.11, stage: 0.52 },
+  { r: 4.35, tiltX: 1.25,  tiltZ: 0.1,  sats: 6, speed: 0.10, stage: 0.52 },
+];
+const orbitSystems = [];
+ORBITS.forEach((o) => {
+  const g = new THREE.Group();
+  g.rotation.set(o.tiltX, 0, o.tiltZ);
+  const pts = [];
+  for (let i = 0; i <= 128; i++) {
+    const a = (i / 128) * Math.PI * 2;
+    pts.push(new THREE.Vector3(Math.cos(a) * o.r, 0, Math.sin(a) * o.r));
+  }
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x38e1ff, transparent: true, opacity: 0 });
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdfe9ff, emissive: 0x38e1ff, emissiveIntensity: 0.6, transparent: true, opacity: 0 });
+  const panelMat = new THREE.MeshStandardMaterial({ color: 0x1a2c55, emissive: 0x2f7bff, emissiveIntensity: 0.8, transparent: true, opacity: 0 });
+  const sats = [];
+  for (let i = 0; i < o.sats; i++) {
+    const sat = new THREE.Group();
+    sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 0.05), bodyMat));
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.004, 0.06), panelMat);
+    sat.add(panel);
+    sat.userData.phase = (i / o.sats) * Math.PI * 2;
+    g.add(sat);
+    sats.push(sat);
+  }
+  earthGroup.add(g);
+  orbitSystems.push({ ...o, group: g, lineMat, bodyMat, panelMat, satMeshes: sats });
+});
+
+/* --- space stations (Earth orbit) --- */
+function makeStation(scale, mat) {
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.17 * scale, 0.028 * scale, 8, 36), mat);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.035 * scale, 0.035 * scale, 0.34 * scale, 8), mat);
+  hub.rotation.x = Math.PI / 2;
+  const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.32 * scale, 0.012 * scale, 0.012 * scale), mat);
+  g.add(ring, hub, spoke);
+  return g;
+}
+const EARTH_STATIONS = [
+  { r: 3.4, tiltX: 0.6,  speed: 0.16, phase: 0.5, scale: 1,   stage: 0.28 },
+  { r: 3.7, tiltX: -0.4, speed: 0.13, phase: 2.6, scale: 1.2, stage: 0.28 },
+  { r: 4.0, tiltX: 0.1,  speed: 0.11, phase: 4.2, scale: 1.5, stage: 0.52 },
+  { r: 4.3, tiltX: 1.0,  speed: 0.09, phase: 1.4, scale: 1.8, stage: 0.78 },
+];
+const earthStations = EARTH_STATIONS.map((s) => {
+  const mat = new THREE.MeshStandardMaterial({ color: 0xcfe0ff, emissive: 0x38e1ff, emissiveIntensity: 0.9, transparent: true, opacity: 0 });
+  const st = makeStation(s.scale, mat);
+  const pivot = new THREE.Group();
+  pivot.rotation.x = s.tiltX;
+  pivot.add(st);
+  earthGroup.add(pivot);
+  return { ...s, pivot, st, mat };
+});
+
+/* --- the Moon, orbiting behind, gaining outposts --- */
+const moonPivot = new THREE.Group();
+earthGroup.add(moonPivot);
+const moonTexLoader = new THREE.TextureLoader();
+moonTexLoader.setCrossOrigin('anonymous');
+const moonMat = new THREE.MeshStandardMaterial({ color: 0x9a9aa5, roughness: 1, metalness: 0 });
+moonTexLoader.load('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/textures/planets/moon_1024.jpg',
+  (tx) => { tx.colorSpace = THREE.SRGBColorSpace; moonMat.map = tx; moonMat.color.set(0xffffff); moonMat.needsUpdate = true; },
+  undefined, () => {});
+const moon = new THREE.Mesh(new THREE.SphereGeometry(0.62, 40, 40), moonMat);
+moonPivot.add(moon);
+const MOON_ORBIT_R = 8.4;
+/* moon base glow + orbiting outposts */
+const moonBaseMat = new THREE.MeshBasicMaterial({ color: 0xffd76a, transparent: true, opacity: 0 });
+const moonBase = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), moonBaseMat);
+moonBase.position.set(0, 0.6, 0.12);
+moon.add(moonBase);
+const moonStations = [0, 1].map((i) => {
+  const mat = new THREE.MeshStandardMaterial({ color: 0xcfe0ff, emissive: 0xffd76a, emissiveIntensity: 1, transparent: true, opacity: 0 });
+  const st = makeStation(0.45, mat);
+  moon.add(st);
+  return { st, mat, phase: i * Math.PI, r: 1.05, speed: 0.5 };
+});
+
+/* --- Earth ↔ Moon travel lane (stage 4) --- */
+const LANE_POINTS = 40;
+const laneGeo = new THREE.BufferGeometry().setFromPoints(new Array(LANE_POINTS).fill(new THREE.Vector3()));
+const laneMat = new THREE.LineBasicMaterial({ color: 0x38e1ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
+const lane = new THREE.Line(laneGeo, laneMat);
+earthGroup.add(lane);
+const SHIPS = 7;
+const shipGeo = new THREE.BufferGeometry();
+shipGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SHIPS * 3), 3));
+const shipMat = new THREE.PointsMaterial({ size: 0.09, color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+const ships = new THREE.Points(shipGeo, shipMat);
+earthGroup.add(ships);
+const laneCurve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3());
+
+/* --- utopia layer: energy grid + golden mega-ring --- */
+const utopiaGrid = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(EARTH_R * 1.005, 3),
+  new THREE.MeshBasicMaterial({ color: 0x38e1ff, wireframe: true, transparent: true, opacity: 0 })
+);
+utopiaGrid.rotation.z = earth.rotation.z;
+earthGroup.add(utopiaGrid);
+const megaRingMat = new THREE.MeshBasicMaterial({ color: 0xffd76a, transparent: true, opacity: 0 });
+const megaRing = new THREE.Mesh(new THREE.TorusGeometry(EARTH_R * 1.22, 0.016, 8, 140), megaRingMat);
+megaRing.rotation.x = Math.PI / 2 - 0.12;
+earthGroup.add(megaRing);
 
 /* ================= layout: earth position per breakpoint ================= */
 /* Desktop hero: earth right-of-center. Mobile hero: earth upper-center, smaller. */
@@ -769,14 +900,84 @@ function tick() {
   stars2.rotation.y = -t * 0.005;
   stars3.rotation.x = t * 0.0025;
 
-  const p = satGeo.attributes.position.array;
-  for (let i = 0; i < satCount; i++) {
-    const d = satData[i], a = d.a + t * d.s;
-    p[i * 3] = Math.cos(a) * d.r;
-    p[i * 3 + 1] = Math.sin(a * 0.7) * d.r * d.incl * 0.4;
-    p[i * 3 + 2] = Math.sin(a) * d.r;
+  /* ---- civilization story driven by scroll ---- */
+  const maxScroll = document.documentElement.scrollHeight - innerHeight;
+  S.t = maxScroll > 0 ? Math.min(1, scrollY / maxScroll) : 0;
+
+  /* satellites travel linearly along their orbit lines */
+  orbitSystems.forEach((o) => {
+    const a = stageA(o.stage);
+    o.group.visible = a > 0.01;
+    if (!o.group.visible) return;
+    o.lineMat.opacity = 0.22 * a;
+    o.bodyMat.opacity = a; o.panelMat.opacity = a;
+    o.satMeshes.forEach((sat) => {
+      const ang = sat.userData.phase + t * o.speed;
+      sat.position.set(Math.cos(ang) * o.r, 0, Math.sin(ang) * o.r);
+      sat.rotation.y = -ang; /* keep panels aligned with the travel direction */
+    });
+  });
+
+  /* Earth stations */
+  earthStations.forEach((s) => {
+    const a = stageA(s.stage);
+    s.pivot.visible = a > 0.01;
+    if (!s.pivot.visible) return;
+    s.mat.opacity = a;
+    const ang = s.phase + t * s.speed;
+    s.st.position.set(Math.cos(ang) * s.r, 0, Math.sin(ang) * s.r);
+    s.st.rotation.y = -ang;
+    s.st.rotation.x = t * 0.3;
+    s.st.scale.setScalar(0.6 + 0.4 * a);
+  });
+
+  /* Moon orbits behind; outposts appear at the lunar-gateway stage */
+  const ma = t * 0.045 + 2.4;
+  /* orbit kept in the background: shallow z so the Moon never crosses the camera */
+  moon.position.set(Math.cos(ma) * MOON_ORBIT_R, 0.9 * Math.sin(ma * 0.7), Math.sin(ma) * 2.6 - 4.2);
+  moon.rotation.y = t * 0.02;
+  const lunarA = stageA(0.52);
+  moonBaseMat.opacity = lunarA * 0.95;
+  moonStations.forEach((ms) => {
+    ms.mat.opacity = lunarA;
+    ms.st.visible = lunarA > 0.01;
+    const ang = ms.phase + t * ms.speed;
+    ms.st.position.set(Math.cos(ang) * ms.r, 0.15 * Math.sin(ang * 2), Math.sin(ang) * ms.r);
+    ms.st.rotation.y = -ang;
+  });
+
+  /* Earth ↔ Moon travel lane with moving ships */
+  const laneA = stageA(0.78);
+  laneMat.opacity = laneA * 0.35;
+  shipMat.opacity = laneA;
+  lane.visible = ships.visible = laneA > 0.01;
+  if (lane.visible) {
+    const dir = moon.position.clone().normalize();
+    laneCurve.v0.copy(dir.clone().multiplyScalar(EARTH_R * 1.15));
+    laneCurve.v2.copy(moon.position.clone().sub(dir.clone().multiplyScalar(0.9)));
+    laneCurve.v1.copy(laneCurve.v0.clone().add(laneCurve.v2).multiplyScalar(0.5).add(new THREE.Vector3(0, 2.2, 0)));
+    const lp = laneGeo.attributes.position.array;
+    for (let i = 0; i < LANE_POINTS; i++) {
+      const v = laneCurve.getPoint(i / (LANE_POINTS - 1));
+      lp[i * 3] = v.x; lp[i * 3 + 1] = v.y; lp[i * 3 + 2] = v.z;
+    }
+    laneGeo.attributes.position.needsUpdate = true;
+    const sp = shipGeo.attributes.position.array;
+    for (let i = 0; i < SHIPS; i++) {
+      const k = (t * 0.06 + i / SHIPS) % 1;
+      const v = laneCurve.getPoint(i % 2 ? k : 1 - k); /* two-way traffic */
+      sp[i * 3] = v.x; sp[i * 3 + 1] = v.y; sp[i * 3 + 2] = v.z;
+    }
+    shipGeo.attributes.position.needsUpdate = true;
   }
-  satGeo.attributes.position.needsUpdate = true;
+
+  /* the planet itself advances: brighter cities, energy grid, mega-ring */
+  earth.material.emissiveIntensity = 1.35 + S.t * 1.5;
+  const utopiaA = stageA(0.78);
+  utopiaGrid.material.opacity = utopiaA * 0.13;
+  utopiaGrid.rotation.y = t * 0.035;
+  megaRingMat.opacity = utopiaA * 0.55;
+  megaRing.rotation.z = t * 0.05;
 
   /* gentle mouse parallax (desktop) */
   if (!isMobile) {
@@ -875,10 +1076,35 @@ function buildScroll() {
 /* ================= UI (non-3D) ================= */
 const nav = document.getElementById('nav');
 const scrollProgress = document.getElementById('scrollProgress');
+/* planetary status HUD: era narration follows the Earth's evolution */
+const ERAS = [
+  [0.00, '2026', 'Type 0.73 — first satellite constellations circle the Earth.'],
+  [0.28, '2040', 'Orbital expansion — space stations come online above the planet.'],
+  [0.52, '2060', 'Lunar gateway — outposts activate around the Moon.'],
+  [0.78, '2075', 'Type I — the planetary grid completes. Earth becomes a utopia.'],
+];
+const earthHud = document.getElementById('earthHud');
+const ehEra = document.getElementById('ehEra');
+const ehStage = document.getElementById('ehStage');
+const ehDots = [...earthHud.querySelectorAll('.ehdots i')];
+let curEra = 0;
+function setEra(i) {
+  if (i === curEra) return;
+  curEra = i;
+  ehEra.textContent = ERAS[i][1];
+  ehStage.textContent = ERAS[i][2];
+  ehDots.forEach((d, k) => d.classList.toggle('on', k <= i));
+  earthHud.classList.toggle('utopia', i === 3);
+  [ehEra, ehStage].forEach((el) => { el.classList.remove('eh-fade'); void el.offsetWidth; el.classList.add('eh-fade'); });
+}
 addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', scrollY > 40);
   const max = document.documentElement.scrollHeight - innerHeight;
-  scrollProgress.style.width = (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+  const p = max > 0 ? scrollY / max : 0;
+  scrollProgress.style.width = p * 100 + '%';
+  let i = 0;
+  ERAS.forEach(([th], k) => { if (p >= th) i = k; });
+  setEra(i);
 }, { passive: true });
 
 /* journey nav: highlight the chapter in view */
