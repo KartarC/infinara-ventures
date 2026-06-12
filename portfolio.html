@@ -37,8 +37,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
   padding:1rem var(--pad);transition:.4s;border-bottom:1px solid transparent}
 nav.scrolled{background:rgba(2,5,14,.7);backdrop-filter:blur(18px);border-bottom-color:var(--line)}
-.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;display:flex;align-items:center;gap:.55rem;z-index:60;position:relative}
-.logo .bolt{width:26px;height:26px;display:grid;place-items:center;border-radius:7px;background:var(--cyan);font-size:.85rem;flex:none}
+.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;display:flex;align-items:center;gap:.6rem;z-index:60;position:relative}
+.logo .mark{width:30px;height:30px;object-fit:contain;flex:none;
+  filter:drop-shadow(0 0 6px rgba(56,225,255,.45)) drop-shadow(0 0 1px rgba(234,241,255,.6))}
 .logo span.v{color:var(--muted);font-weight:400}
 .navlinks{display:flex;gap:2.2rem;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .navlinks a{transition:color .25s}
@@ -112,7 +113,7 @@ footer .flinks a:hover{color:var(--cyan)}
 <div class="grain"></div>
 
 <nav id="nav">
-  <a class="logo" href="index.html"><span class="bolt">⚡</span>INFINARA<span class="v">&nbsp;VENTURES</span></a>
+  <a class="logo" href="index.html"><img class="mark" src="assets/infinara-mark-512.png" alt="Infinara Ventures mark">INFINARA<span class="v">&nbsp;VENTURES</span></a>
   <div class="navlinks">
     <a href="index.html#kardashev">The Scale</a>
     <a href="index.html#divisions">Divisions</a>
@@ -208,7 +209,10 @@ footer .flinks a:hover{color:var(--cyan)}
 </div>
 
 <footer>
-  <div>© <span id="year"></span> Infinara Ventures. Advancing Humanity Toward a Type I Civilization.</div>
+  <div style="display:flex;align-items:center;gap:.8rem">
+    <img src="assets/infinara-mark-512.png" alt="Infinara Ventures mark" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(56,225,255,.4))">
+    <div>© <span id="year"></span> Infinara Ventures. Advancing Humanity Toward a Type I Civilization.</div>
+  </div>
   <div class="flinks">
     <a href="index.html">Home</a>
     <a href="portfolio.html">Portfolio</a>

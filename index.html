@@ -48,6 +48,9 @@ img{max-width:100%}
   position:fixed;inset:0;z-index:100;background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;
 }
+#loader .lmark{width:56px;height:56px;object-fit:contain;
+  filter:drop-shadow(0 0 14px rgba(56,225,255,.5));animation:lpulse 2s ease-in-out infinite}
+@keyframes lpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 #loader .word{
   font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.5em;text-indent:.5em;
   font-size:clamp(.8rem,2.4vw,1.05rem);color:var(--ink);opacity:.9;
@@ -99,9 +102,9 @@ nav{
   border-bottom:1px solid transparent;
 }
 nav.scrolled{background:rgba(2,5,14,.7);backdrop-filter:blur(18px);border-bottom-color:var(--line)}
-.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;display:flex;align-items:center;gap:.55rem;z-index:60;position:relative}
-.logo .bolt{width:26px;height:26px;display:grid;place-items:center;border-radius:7px;
-  background:var(--cyan);font-size:.85rem;flex:none}
+.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;display:flex;align-items:center;gap:.6rem;z-index:60;position:relative}
+.logo .mark{width:30px;height:30px;object-fit:contain;flex:none;
+  filter:drop-shadow(0 0 6px rgba(56,225,255,.45)) drop-shadow(0 0 1px rgba(234,241,255,.6))}
 .logo span.v{color:var(--muted);font-weight:400}
 .navlinks{display:flex;gap:2.2rem;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .navlinks a{transition:color .25s;position:relative;padding:.2rem 0}
@@ -280,6 +283,7 @@ footer .flinks a:hover{color:var(--cyan)}
 <body>
 
 <div id="loader">
+  <img class="lmark" src="assets/infinara-mark-512.png" alt="">
   <div class="word">INFINARA</div>
   <div class="track"><div class="fill" id="loadFill"></div></div>
   <div class="pct" id="loadPct">00</div>
@@ -301,7 +305,7 @@ footer .flinks a:hover{color:var(--cyan)}
 <div class="cursor-ring" id="cursorRing"></div>
 
 <nav id="nav">
-  <a class="logo" href="#top"><span class="bolt">⚡</span>INFINARA<span class="v">&nbsp;VENTURES</span></a>
+  <a class="logo" href="#top"><img class="mark" src="assets/infinara-mark-512.png" alt="Infinara Ventures mark">INFINARA<span class="v">&nbsp;VENTURES</span></a>
   <div class="navlinks">
     <a href="#kardashev">The Scale</a>
     <a href="#divisions">Divisions</a>
@@ -515,7 +519,10 @@ footer .flinks a:hover{color:var(--cyan)}
 </div>
 
 <footer>
-  <div>© <span id="year"></span> Infinara Ventures. Advancing Humanity Toward a Type I Civilization.</div>
+  <div style="display:flex;align-items:center;gap:.8rem">
+    <img src="assets/infinara-mark-512.png" alt="Infinara Ventures mark" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(56,225,255,.4))">
+    <div>© <span id="year"></span> Infinara Ventures. Advancing Humanity Toward a Type I Civilization.</div>
+  </div>
   <div class="flinks">
     <a href="#kardashev">The Scale</a>
     <a href="#divisions">Divisions</a>
