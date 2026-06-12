@@ -235,8 +235,9 @@ section{padding:clamp(5rem,12vh,8.5rem) var(--pad);max-width:1400px;margin:0 aut
 .card:hover::before{opacity:1}
 .card:hover{border-color:rgba(56,225,255,.35);box-shadow:0 24px 60px rgba(2,5,14,.6)}
 .card .num{position:absolute;top:1.4rem;right:1.6rem;font-family:'Space Grotesk',sans-serif;font-size:.72rem;letter-spacing:.2em;color:var(--muted);opacity:.7}
-.card .icon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:1.4rem;margin-bottom:1.3rem;
+.card .icon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;margin-bottom:1.3rem;
   background:linear-gradient(135deg,rgba(56,225,255,.15),rgba(139,92,246,.15));border:1px solid rgba(56,225,255,.25)}
+.card .icon svg{width:24px;height:24px;stroke:var(--cyan);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .card h3{font-size:1.15rem;margin-bottom:.65rem}
 .card p{font-size:.89rem;color:var(--muted)}
 .card .tags{margin-top:1.25rem;display:flex;flex-wrap:wrap;gap:.4rem}
@@ -432,43 +433,43 @@ footer .flinks a:hover{color:var(--cyan)}
     </div>
     <div class="grid">
       <div class="card" data-reveal>
-        <div class="num">01</div><div class="icon">⚡</div>
+        <div class="num">01</div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5h5.5L11 22l8.5-11.5H14L13 2z"/></svg></div>
         <h3>Energy Revolution</h3>
         <p>Fusion power, advanced solar, and quantum storage — abundant clean energy is the foundation of a Type I civilization.</p>
         <div class="tags"><span>Fusion</span><span>Solar</span><span>Storage</span></div>
       </div>
       <div class="card" data-reveal>
-        <div class="num">02</div><div class="icon">🚀</div>
+        <div class="num">02</div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.5c2.8 2.3 4 5.5 4 8.7l-4 4.3-4-4.3c0-3.2 1.2-6.4 4-8.7z"/><circle cx="12" cy="9" r="1.6"/><path d="M8 13.5 5.5 19l4-1.8M16 13.5 18.5 19l-4-1.8M12 16v4.5"/></svg></div>
         <h3>Space Exploration</h3>
         <p>Reusable launch systems, orbital infrastructure, and the first steps toward a multi-planetary economy.</p>
         <div class="tags"><span>Launch</span><span>Orbital</span><span>Settlement</span></div>
       </div>
       <div class="card" data-reveal>
-        <div class="num">03</div><div class="icon">🧬</div>
+        <div class="num">03</div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 2.5c0 6 8 7 8 13M16 2.5c0 2.5-1.5 4.3-3.5 5.6M8 21.5c0-2.5 1.5-4.3 3.5-5.6M16 21.5c0-6-8-7-8-13"/><path d="M8.6 5h6.8M8.6 19h6.8M10 12h4"/></svg></div>
         <h3>Bio-Engineering</h3>
         <p>Biotechnology that extends healthy human life, secures the food supply, and engineers resilience into our biosphere.</p>
         <div class="tags"><span>Longevity</span><span>Synthetic Bio</span><span>Food</span></div>
       </div>
       <div class="card" data-reveal>
-        <div class="num">04</div><div class="icon">🤖</div>
+        <div class="num">04</div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><rect x="10.2" y="10.2" width="3.6" height="3.6" rx="1"/><path d="M9 7V3.5M15 7V3.5M9 20.5V17M15 20.5V17M7 9H3.5M7 15H3.5M20.5 9H17M20.5 15H17"/></svg></div>
         <h3>AI &amp; Advancement</h3>
         <p>Artificial intelligence as a force multiplier — accelerating research, automating industry, and amplifying human capability.</p>
         <div class="tags"><span>AGI Safety</span><span>Robotics</span><span>Research</span></div>
       </div>
       <div class="card" data-reveal>
-        <div class="num">05</div><div class="icon">📡</div>
+        <div class="num">05</div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4.5 2.5 9 12 13.5 21.5 9 12 4.5z"/><path d="M6.5 11.2v4.8c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8v-4.8"/><path d="M21.5 9v5.5"/></svg></div>
         <h3>Education for All</h3>
         <p>Universal access to world-class knowledge. A planetary civilization requires a planet of educated minds.</p>
         <div class="tags"><span>Access</span><span>Open Knowledge</span><span>Skills</span></div>
       </div>
       <div class="card" data-reveal>
-        <div class="num">06</div><div class="icon">🌐</div>
+        <div class="num">06</div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3.5 9h17M3.5 15h17"/></svg></div>
         <h3>Civilization Coordination</h3>
         <p>Global governance tooling, open protocols, and institutions that let eight billion people act as one species.</p>
         <div class="tags"><span>Protocols</span><span>Governance</span><span>Networks</span></div>
       </div>
       <a class="card" data-reveal href="portfolio.html" style="grid-column:1/-1">
-        <div class="num">07</div><div class="icon">🏭</div>
+        <div class="num">07</div><div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 20.5V10l5 3.6V10l5 3.6V10l7 4v6.5h-17z"/><path d="M17 10V4h3.5v7.5M7 17h2M12 17h2"/></svg></div>
         <h3>Future Industrial Manufacturing</h3>
         <p>The machines, tooling, and consumables that build everything else — already operating through our portfolio companies Machinist's Vault, Wavlon Lasers, SkyLife Aircrafts, and Axon AI.</p>
         <div class="tags"><span>Fiber Lasers</span><span>Finishing Equipment</span><span>Aerospace</span><span>Applied AI</span><span style="border-color:rgba(56,225,255,.6)">View Portfolio →</span></div>
