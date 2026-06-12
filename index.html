@@ -580,7 +580,7 @@ const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 40
 camera.position.set(0, 0, 9);
 
 /* lights: sun + faint fill (light direction matches the visible sun) */
-const SUN_POS = new THREE.Vector3(-42, 11, -24);
+const SUN_POS = new THREE.Vector3(-16, 8, -38); /* in-frame: upper-left, behind the Earth */
 const sun = new THREE.DirectionalLight(0xfff2dd, 2.4);
 sun.position.copy(SUN_POS);
 scene.add(sun);
@@ -591,7 +591,7 @@ const sunGroup = new THREE.Group();
 sunGroup.position.copy(SUN_POS);
 scene.add(sunGroup);
 const sunCore = new THREE.Mesh(
-  new THREE.SphereGeometry(2.7, 24, 24),
+  new THREE.SphereGeometry(3.1, 24, 24),
   new THREE.MeshBasicMaterial({ color: 0xfff6dc })
 );
 sunGroup.add(sunCore);
@@ -607,9 +607,9 @@ function glowTexture() {
 }
 const glowTex = glowTexture();
 const sunGlow1 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: .95, depthWrite: false, blending: THREE.AdditiveBlending }));
-sunGlow1.scale.setScalar(13);
+sunGlow1.scale.setScalar(17);
 const sunGlow2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: .35, depthWrite: false, blending: THREE.AdditiveBlending }));
-sunGlow2.scale.setScalar(26);
+sunGlow2.scale.setScalar(36);
 sunGroup.add(sunGlow1, sunGlow2);
 
 /* Dyson swarm: rigid rings of collector panels that assemble with scroll */
@@ -620,9 +620,9 @@ function makeSwarm(radius, count, tiltX, tiltZ) {
   const edgeMat = new THREE.MeshBasicMaterial({ color: 0x38e1ff, transparent: true, opacity: 0 });
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2;
-    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.05, 0.34), mat);
-    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.015, 0.05), edgeMat);
-    edge.position.y = 0.035;
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.07, 0.55), mat);
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.02, 0.08), edgeMat);
+    edge.position.y = 0.05;
     panel.add(edge);
     panel.position.set(Math.cos(a) * radius, (Math.sin(a * 3) * 0.3), Math.sin(a) * radius);
     panel.lookAt(0, 0, 0);
@@ -635,8 +635,8 @@ function makeSwarm(radius, count, tiltX, tiltZ) {
   sunGroup.add(g);
   return { g, mat, edgeMat, ringMat };
 }
-const swarm1 = makeSwarm(4.6, 30, 0.35, 0.1);   /* first panels: lunar-gateway era */
-const swarm2 = makeSwarm(6.0, 42, -0.55, 0.3);  /* second shell: utopia era */
+const swarm1 = makeSwarm(5.4, 30, 0.35, 0.1);   /* first panels: lunar-gateway era */
+const swarm2 = makeSwarm(7.0, 42, -0.55, 0.3);  /* second shell: utopia era */
 
 /* ================= loading manager / preloader ================= */
 const loadFill = document.getElementById('loadFill');
@@ -828,14 +828,31 @@ ORBITS.forEach((o) => {
   orbitSystems.push({ ...o, group: g, lineMat, bodyMat, panelMat, satMeshes: sats });
 });
 
-/* --- space stations (Earth orbit) --- */
-function makeStation(scale, mat) {
+/* --- space stations (Earth orbit), ISS-style: truss, modules, solar arrays --- */
+function makeStation(scale, hullMat, arrayMat) {
   const g = new THREE.Group();
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.17 * scale, 0.028 * scale, 8, 36), mat);
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.035 * scale, 0.035 * scale, 0.34 * scale, 8), mat);
-  hub.rotation.x = Math.PI / 2;
-  const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.32 * scale, 0.012 * scale, 0.012 * scale), mat);
-  g.add(ring, hub, spoke);
+  const truss = new THREE.Mesh(new THREE.BoxGeometry(0.52 * scale, 0.014 * scale, 0.014 * scale), hullMat);
+  g.add(truss);
+  [[-0.19, 1], [-0.19, -1], [0.19, 1], [0.19, -1]].forEach(([x, side]) => {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.055 * scale, 0.002 * scale, 0.17 * scale), arrayMat);
+    wing.position.set(x * scale, 0, side * 0.105 * scale);
+    g.add(wing);
+  });
+  const mainModule = new THREE.Mesh(new THREE.CylinderGeometry(0.026 * scale, 0.026 * scale, 0.3 * scale, 10), hullMat);
+  mainModule.rotation.x = Math.PI / 2;
+  g.add(mainModule);
+  const crossModule = new THREE.Mesh(new THREE.CylinderGeometry(0.021 * scale, 0.021 * scale, 0.15 * scale, 10), hullMat);
+  crossModule.rotation.z = Math.PI / 2;
+  crossModule.position.z = 0.07 * scale;
+  g.add(crossModule);
+  const radiator = new THREE.Mesh(new THREE.BoxGeometry(0.002 * scale, 0.06 * scale, 0.1 * scale), hullMat);
+  radiator.position.set(0.07 * scale, -0.04 * scale, -0.06 * scale);
+  g.add(radiator);
+  if (scale >= 1.4) { /* the big stations get a rotating habitat ring */
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.15 * scale, 0.013 * scale, 8, 44), hullMat);
+    ring.rotation.x = Math.PI / 2;
+    g.add(ring);
+  }
   return g;
 }
 const EARTH_STATIONS = [
@@ -845,14 +862,25 @@ const EARTH_STATIONS = [
   { r: 4.3, tiltX: 1.0,  speed: 0.09, phase: 1.4, scale: 1.8, stage: 0.78 },
 ];
 const earthStations = EARTH_STATIONS.map((s) => {
-  const mat = new THREE.MeshStandardMaterial({ color: 0xcfe0ff, emissive: 0x38e1ff, emissiveIntensity: 0.9, transparent: true, opacity: 0 });
-  const st = makeStation(s.scale, mat);
+  const hullMat = new THREE.MeshStandardMaterial({ color: 0xdde6f5, emissive: 0x38506e, emissiveIntensity: 0.25, roughness: .45, metalness: .7, transparent: true, opacity: 0 });
+  const arrayMat = new THREE.MeshStandardMaterial({ color: 0x0e1d44, emissive: 0x2f7bff, emissiveIntensity: 0.5, roughness: .35, metalness: .4, transparent: true, opacity: 0 });
+  const st = makeStation(s.scale, hullMat, arrayMat);
   const pivot = new THREE.Group();
   pivot.rotation.x = s.tiltX;
   pivot.add(st);
   earthGroup.add(pivot);
-  return { ...s, pivot, st, mat };
+  return { ...s, pivot, st, mats: [hullMat, arrayMat] };
 });
+
+/* shuttle traffic: lights running Earth ↔ stations */
+const T_PER_STATION = 3;
+const T_SHIPS = earthStations.length * T_PER_STATION;
+const trafGeo = new THREE.BufferGeometry();
+trafGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(T_SHIPS * 3), 3));
+const trafMat = new THREE.PointsMaterial({ size: 0.055, color: 0xbfe9ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+const traffic = new THREE.Points(trafGeo, trafMat);
+earthGroup.add(traffic);
+const tmpV = new THREE.Vector3();
 
 /* --- the Moon, orbiting behind, gaining outposts --- */
 const moonPivot = new THREE.Group();
@@ -872,11 +900,22 @@ const moonBase = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), moonBase
 moonBase.position.set(0, 0.6, 0.12);
 moon.add(moonBase);
 const moonStations = [0, 1].map((i) => {
-  const mat = new THREE.MeshStandardMaterial({ color: 0xcfe0ff, emissive: 0xffd76a, emissiveIntensity: 1, transparent: true, opacity: 0 });
-  const st = makeStation(0.45, mat);
+  const hullMat = new THREE.MeshStandardMaterial({ color: 0xdde6f5, emissive: 0xffd76a, emissiveIntensity: 0.5, roughness: .45, metalness: .7, transparent: true, opacity: 0 });
+  const arrayMat = new THREE.MeshStandardMaterial({ color: 0x0e1d44, emissive: 0x2f7bff, emissiveIntensity: 0.5, transparent: true, opacity: 0 });
+  const st = makeStation(0.5, hullMat, arrayMat);
   moon.add(st);
-  return { st, mat, phase: i * Math.PI, r: 1.05, speed: 0.5 };
+  return { st, mats: [hullMat, arrayMat], phase: i * Math.PI, r: 1.05, speed: 0.5 };
 });
+
+/* lunar settlements: clustered surface lights, like Earth's cities at night */
+const moonCityPts = [];
+[[28, 15], [-12, 40], [8, -35]].forEach(([la, lo]) => {
+  for (let i = 0; i < 6; i++) {
+    moonCityPts.push(latLonToVec(la + (Math.random() - .5) * 14, lo + (Math.random() - .5) * 18, 0.632));
+  }
+});
+const moonCityMat = new THREE.PointsMaterial({ size: 0.035, color: 0xffd9a0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+moon.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(moonCityPts), moonCityMat));
 
 /* --- Earth ↔ Moon travel lane (stage 4) --- */
 const LANE_POINTS = 40;
@@ -989,18 +1028,40 @@ function tick() {
     });
   });
 
-  /* Earth stations */
+  /* Earth stations (hold attitude along their orbit — no tumbling) */
   earthStations.forEach((s) => {
     const a = stageA(s.stage);
     s.pivot.visible = a > 0.01;
     if (!s.pivot.visible) return;
-    s.mat.opacity = a;
+    s.mats.forEach((m) => (m.opacity = a));
     const ang = s.phase + t * s.speed;
     s.st.position.set(Math.cos(ang) * s.r, 0, Math.sin(ang) * s.r);
     s.st.rotation.y = -ang;
-    s.st.rotation.x = t * 0.3;
     s.st.scale.setScalar(0.6 + 0.4 * a);
   });
+
+  /* shuttle lights running Earth ↔ stations */
+  const trafA = stageA(0.28);
+  trafMat.opacity = trafA;
+  traffic.visible = trafA > 0.01;
+  if (traffic.visible) {
+    const tp = trafGeo.attributes.position.array;
+    earthStations.forEach((s, si) => {
+      const built = stageA(s.stage) > 0.5;
+      s.st.getWorldPosition(tmpV);
+      earthGroup.worldToLocal(tmpV);
+      const surf = tmpV.clone().normalize().multiplyScalar(EARTH_R * 1.03);
+      for (let k = 0; k < T_PER_STATION; k++) {
+        const idx = (si * T_PER_STATION + k) * 3;
+        if (!built) { tp[idx] = 0; tp[idx + 1] = -999; tp[idx + 2] = 0; continue; }
+        let f = (t * 0.11 + k / T_PER_STATION + si * 0.17) % 1;
+        if (k === T_PER_STATION - 1) f = 1 - f; /* return traffic */
+        const pos = surf.clone().lerp(tmpV, f).multiplyScalar(1 + Math.sin(f * Math.PI) * 0.05);
+        tp[idx] = pos.x; tp[idx + 1] = pos.y; tp[idx + 2] = pos.z;
+      }
+    });
+    trafGeo.attributes.position.needsUpdate = true;
+  }
 
   /* Moon orbits behind; outposts appear at the lunar-gateway stage */
   const ma = t * 0.045 + 2.4;
@@ -1010,12 +1071,13 @@ function tick() {
   const lunarA = stageA(0.52);
   moonBaseMat.opacity = lunarA * 0.95;
   moonStations.forEach((ms) => {
-    ms.mat.opacity = lunarA;
+    ms.mats.forEach((m) => (m.opacity = lunarA));
     ms.st.visible = lunarA > 0.01;
     const ang = ms.phase + t * ms.speed;
     ms.st.position.set(Math.cos(ang) * ms.r, 0.15 * Math.sin(ang * 2), Math.sin(ang) * ms.r);
     ms.st.rotation.y = -ang;
   });
+  moonCityMat.opacity = lunarA;
 
   /* Earth ↔ Moon travel lane with moving ships */
   const laneA = stageA(0.78);
@@ -1061,6 +1123,9 @@ function tick() {
   swarm1.g.rotation.y = t * 0.07;
   swarm2.g.rotation.y = -t * 0.05;
   sunGlow1.material.opacity = .9 + Math.sin(t * 1.3) * .07;
+  /* the Sun eases up into frame as civilization advances */
+  sunGroup.position.y = SUN_POS.y - 3 + S.t * 6;
+  sun.position.copy(sunGroup.position);
 
   /* city lights spawn over the dark regions as civilization grows */
   cityLayers.forEach((l) => { l.mat.opacity = stageA(l.stage); });
