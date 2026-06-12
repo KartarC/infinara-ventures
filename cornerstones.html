@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Nine Cornerstones — Infinara Ventures</title>
+<meta name="description" content="An interactive 3D journey through the Nine Cornerstones of Infinara Ventures — the foundational pillars supporting humanity's transition to a Type I civilization.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+:root{
+  --bg:#02050e;
+  --ink:#eaf1ff;
+  --muted:#8da0bf;
+  --cyan:#38e1ff;
+  --blue:#2f7bff;
+  --gold:#ffd76a;
+  --line:rgba(141,160,191,.15);
+  --pad:clamp(1.25rem,5vw,5rem);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:'Inter',sans-serif;font-weight:300;line-height:1.65;overflow-x:hidden}
+::selection{background:rgba(56,225,255,.28)}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+
+#scene{position:fixed;inset:0;z-index:0}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* loader */
+#loader{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem}
+#loader .word{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.5em;text-indent:.5em;font-size:clamp(.8rem,2.4vw,1rem)}
+#loader .sub{font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+#loader .track{width:min(280px,60vw);height:1px;background:rgba(141,160,191,.2)}
+#loader .fill{height:100%;width:0%;background:var(--cyan)}
+
+/* top bar */
+.bar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:1rem var(--pad)}
+.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.14em;display:flex;align-items:center;gap:.55rem}
+.logo .bolt{width:24px;height:24px;display:grid;place-items:center;border-radius:6px;background:var(--cyan);font-size:.8rem;flex:none}
+.logo span.v{color:var(--muted);font-weight:400}
+.bar .back{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);transition:.3s;border:1px solid var(--line);border-radius:99px;padding:.55rem 1.1rem}
+.bar .back:hover{color:var(--cyan);border-color:rgba(56,225,255,.4)}
+
+/* intro narrative lines */
+.narrative{position:fixed;inset:0;z-index:10;display:grid;place-items:center;pointer-events:none;text-align:center;padding:0 1.5rem}
+.narrative .nline{position:absolute;max-width:880px;font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(1.5rem,4.4vw,3.4rem);font-weight:500;opacity:0;letter-spacing:-.01em;
+  text-shadow:0 4px 40px rgba(2,5,14,.9)}
+.narrative .nline em{font-style:normal;color:var(--cyan)}
+
+/* center identity */
+.core-id{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;text-align:center;pointer-events:none;opacity:0}
+.core-id h1{font-size:clamp(1.15rem,3vw,2rem);letter-spacing:.3em;text-indent:.3em;text-transform:uppercase;font-weight:700;
+  text-shadow:0 0 40px rgba(56,225,255,.5)}
+.core-id p{font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:.6rem}
+.core-id.finale h1{color:var(--gold);text-shadow:0 0 60px rgba(255,215,106,.6)}
+
+/* hover label */
+.hover-tag{position:fixed;z-index:20;pointer-events:none;opacity:0;transform:translate(-50%,-130%);
+  font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);
+  background:rgba(2,5,14,.78);border:1px solid rgba(56,225,255,.35);border-radius:99px;padding:.5rem 1rem;backdrop-filter:blur(10px);white-space:nowrap;transition:opacity .2s}
+
+/* scroll hint + stage hint */
+.hint{position:fixed;bottom:1.6rem;left:50%;transform:translateX(-50%);z-index:20;color:var(--muted);
+  font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;text-align:center;transition:opacity .5s}
+.hint .ln{display:block;width:1px;height:36px;margin:0.6rem auto 0;background:linear-gradient(180deg,var(--cyan),transparent);animation:drip 2s ease-in-out infinite}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}55%{transform:scaleY(1);transform-origin:top}56%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* progress dots (9 cornerstones) */
+.cs-progress{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:25;display:flex;gap:.55rem;opacity:0;transition:opacity .5s;pointer-events:none}
+.cs-progress i{width:8px;height:8px;border-radius:50%;border:1px solid var(--muted);transition:.4s}
+.cs-progress i.lit{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 12px rgba(56,225,255,.8)}
+.cs-progress i.gold{background:var(--gold);border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,106,.8)}
+
+/* info card */
+.card-wrap{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:1.2rem;
+  background:rgba(2,5,14,.55);backdrop-filter:blur(8px);opacity:0;visibility:hidden}
+.card{width:min(620px,94vw);max-height:86svh;overflow:auto;background:rgba(8,14,30,.92);
+  border:1px solid rgba(56,225,255,.3);border-radius:24px;padding:clamp(1.6rem,4vw,2.6rem);
+  box-shadow:0 0 80px rgba(56,225,255,.12), inset 0 0 60px rgba(56,225,255,.04)}
+.card .cnum{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.3em;color:var(--cyan)}
+.card .cicon{font-size:2.2rem;margin:.8rem 0 .4rem;display:block}
+.card h2{font-size:clamp(1.5rem,3.6vw,2.2rem);margin-bottom:.7rem}
+.card p.desc{color:var(--muted);font-size:.95rem}
+.card .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:1.6rem 0}
+.card .stat{border:1px solid var(--line);border-radius:14px;padding:1rem .6rem;text-align:center}
+.card .stat b{font-family:'Space Grotesk',sans-serif;font-size:1.3rem;display:block;color:var(--cyan)}
+.card .stat i{font-style:normal;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.card .ret{font-family:'Space Grotesk',sans-serif;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;
+  border:1px solid rgba(56,225,255,.4);color:var(--cyan);border-radius:99px;padding:.85rem 1.9rem;transition:.3s}
+.card .ret:hover{background:rgba(56,225,255,.12)}
+@media(max-width:560px){.card .stats{grid-template-columns:1fr 1fr}}
+
+/* finale overlay */
+.finale{position:fixed;inset:0;z-index:45;display:grid;place-items:center;text-align:center;padding:1.5rem;
+  opacity:0;visibility:hidden;pointer-events:none}
+.finale .fin-inner{max-width:860px}
+.finale blockquote{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.5rem,4.2vw,3rem);font-weight:500;line-height:1.35;
+  text-shadow:0 4px 50px rgba(2,5,14,.9)}
+.finale .fbrand{margin-top:2.2rem;opacity:0}
+.finale .fbrand h3{font-size:clamp(1rem,2.6vw,1.5rem);letter-spacing:.32em;text-indent:.32em;text-transform:uppercase}
+.finale .fbrand p{color:var(--muted);font-size:.8rem;margin-top:.6rem;letter-spacing:.06em}
+.finale .factions{margin-top:2.4rem;opacity:0;pointer-events:auto}
+.finale .factions a,.finale .factions button{font-family:'Space Grotesk',sans-serif;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;
+  padding:.95rem 2rem;border-radius:99px;margin:.35rem;display:inline-block;transition:.3s}
+.finale .factions .gold{background:var(--gold);color:#1a1304;font-weight:600}
+.finale .factions .gold:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(255,215,106,.4)}
+.finale .factions .ghost{border:1px solid var(--line);color:var(--ink)}
+.finale .factions .ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+.fade-black{position:fixed;inset:0;z-index:44;background:#000;opacity:0;pointer-events:none}
+
+/* scroll spacer */
+.track{position:relative;z-index:2;pointer-events:none}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="word">INFINARA</div>
+  <div class="track"><div class="fill" id="loadFill"></div></div>
+  <div class="sub">The Nine Cornerstones</div>
+</div>
+
+<canvas id="scene"></canvas>
+<div class="grain"></div>
+
+<div class="bar">
+  <a class="logo" href="index.html"><span class="bolt">⚡</span>INFINARA<span class="v">&nbsp;VENTURES</span></a>
+  <a class="back" href="index.html">← Home</a>
+</div>
+
+<div class="narrative" id="narrative">
+  <div class="nline" data-n="0">Every great civilization is built on <em>foundations</em>.</div>
+  <div class="nline" data-n="1">Ours begins with a planet —<br>and the will to power it.</div>
+  <div class="nline" data-n="2">Nine cornerstones.<br><em>One civilization.</em></div>
+</div>
+
+<div class="core-id" id="coreId">
+  <h1 id="coreTitle">Infinara Ventures</h1>
+  <p id="coreTag">Building Humanity's Type I Future</p>
+</div>
+
+<div class="hover-tag" id="hoverTag"></div>
+
+<div class="hint" id="hint">Scroll to begin<span class="ln"></span></div>
+
+<div class="cs-progress" id="csProgress"></div>
+
+<div class="card-wrap" id="cardWrap">
+  <div class="card" id="card">
+    <div class="cnum" id="cNum"></div>
+    <span class="cicon" id="cIcon"></span>
+    <h2 id="cTitle"></h2>
+    <p class="desc" id="cDesc"></p>
+    <div class="stats" id="cStats"></div>
+    <button class="ret" id="cReturn">← Return to the Foundation</button>
+  </div>
+</div>
+
+<div class="fade-black" id="fadeBlack"></div>
+<div class="finale" id="finale">
+  <div class="fin-inner">
+    <blockquote id="finQuote">"Civilizations are not discovered.<br>They are <em style="font-style:normal;color:var(--gold)">built</em>."</blockquote>
+    <div class="fbrand" id="finBrand">
+      <h3>Infinara Ventures</h3>
+      <p>Building the companies that build the future.</p>
+    </div>
+    <div class="factions" id="finActions">
+      <a class="gold" href="index.html#contact">Partner With Us</a>
+      <a class="ghost" href="portfolio.html">View the Portfolio</a>
+      <button class="ghost" id="replay">Replay</button>
+    </div>
+  </div>
+</div>
+
+<div class="track" id="scrollTrack" style="height:520svh"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+gsap.registerPlugin(ScrollTrigger);
+
+/* ============================================================
+   DATA — the Nine Cornerstones
+============================================================ */
+const CORNERSTONES = [
+  { icon:'🧠', title:'Intelligent Innovation',
+    desc:'Harnessing AI and advanced technology to solve civilization-scale challenges.',
+    stats:[['AI-first','Ventures'],['10×','R&D Leverage'],['24/7','Autonomous Ops']] },
+  { icon:'⚡', title:'Sustainable Energy & Infrastructure',
+    desc:'Powering the systems that enable a Type I Civilization.',
+    stats:[['GW-scale','Ambition'],['0','Carbon Target'],['100%','Uptime Grid']] },
+  { icon:'📚', title:'Accessible Education',
+    desc:'Making personalized learning available to every human.',
+    stats:[['8B','Minds Reached'],['1:1','Personalized'],['Free','At the Core']] },
+  { icon:'🫱', title:'Human-Centric Technology',
+    desc:'Technology designed to enhance human capability.',
+    stats:[['Human','First Design'],['+∞','Capability'],['0','Dark Patterns']] },
+  { icon:'🏭', title:'Venture Creation Engine',
+    desc:'Building companies that build the future.',
+    stats:[['4+','Companies Built'],['6','Divisions'],['∞','Compounding']] },
+  { icon:'⚖️', title:'Ethical Acceleration',
+    desc:'Advancing civilization responsibly and sustainably.',
+    stats:[['Long-term','Horizon'],['Open','By Default'],['Earth','As Stakeholder']], gold:true },
+  { icon:'🕸️', title:'Interconnected Ecosystems',
+    desc:'Creating synergy between industries and technologies.',
+    stats:[['N²','Network Effects'],['Cross','Industry'],['1','Shared Stack']] },
+  { icon:'💠', title:'Adaptive Capital',
+    desc:'Deploying resources where civilization gains the greatest return.',
+    stats:[['ROI','For Humanity'],['Fluid','Allocation'],['50yr','Patience']] },
+  { icon:'🌍', title:'Global Citizenship & Expansion',
+    desc:'Building solutions for humanity without borders.',
+    stats:[['195+','Nations'],['1','Species'],['0','Borders']] },
+];
+
+const isMobile = matchMedia('(max-width: 880px)').matches;
+const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const COL = { cyan:0x38e1ff, blue:0x2f7bff, gold:0xffd76a, white:0xeaf1ff };
+
+/* ============================================================
+   RENDERER / SCENE / BLOOM
+============================================================ */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1));
+renderer.setClearColor(0x02050e, 1);
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x02050e, 0.016);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 500);
+camera.position.set(0, 2.5, 30);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.5, 0.32);
+composer.addPass(bloom);
+let useBloom = true;
+
+scene.add(new THREE.AmbientLight(0x223355, 0.7));
+const keyLight = new THREE.PointLight(0x38e1ff, 80, 120);
+keyLight.position.set(0, 8, 6);
+scene.add(keyLight);
+
+/* ============================================================
+   STARFIELD + AMBIENT PARTICLES
+============================================================ */
+function stars(count, size, spread, color, opacity){
+  const g = new THREE.BufferGeometry();
+  const p = new Float32Array(count*3);
+  for(let i=0;i<count;i++){
+    let x,y,z,d;
+    do{ x=(Math.random()-.5)*spread; y=(Math.random()-.5)*spread; z=(Math.random()-.5)*spread; d=Math.hypot(x,y,z);}while(d<16);
+    p[i*3]=x;p[i*3+1]=y;p[i*3+2]=z;
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(p,3));
+  return new THREE.Points(g, new THREE.PointsMaterial({size,color,transparent:true,opacity,depthWrite:false}));
+}
+const starsA = stars(isMobile?1200:2400, .06, 220, 0xcfe0ff, .9);
+const starsB = stars(isMobile?400:800, .1, 180, 0x9fb6d8, .5);
+scene.add(starsA, starsB);
+
+/* floating energy motes around the stage */
+const moteCount = isMobile?260:600;
+const moteGeo = new THREE.BufferGeometry();
+moteGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(moteCount*3),3));
+const moteData = Array.from({length:moteCount},()=>({r:4+Math.random()*14,a:Math.random()*Math.PI*2,y:(Math.random()-.5)*10,s:.04+Math.random()*.25}));
+const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({size:.07,color:COL.cyan,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending}));
+scene.add(motes);
+let moteSpeed = 1;
+
+/* ============================================================
+   ENERGY EARTH — fresnel core + grid shell
+============================================================ */
+const earthGroup = new THREE.Group();
+scene.add(earthGroup);
+const coreUniforms = { uTime:{value:0}, uLit:{value:0} };
+const earthCore = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(5, 5),
+  new THREE.ShaderMaterial({
+    transparent:true,
+    uniforms: coreUniforms,
+    vertexShader:`varying vec3 vN; varying vec3 vW; varying vec3 vP; uniform float uTime;
+      void main(){ vN=normalize(normalMatrix*normal); vP=position;
+        vec3 p=position+normal*0.05*sin(uTime*1.2+position.y*4.0);
+        vec4 wp=modelMatrix*vec4(p,1.0); vW=wp.xyz;
+        gl_Position=projectionMatrix*viewMatrix*wp; }`,
+    fragmentShader:`varying vec3 vN; varying vec3 vW; varying vec3 vP;
+      uniform float uTime; uniform float uLit;
+      void main(){ vec3 v=normalize(cameraPosition-vW);
+        float f=pow(1.0-max(dot(v,normalize(vN)),0.0),2.4);
+        float lat=0.5+0.5*sin(vP.y*6.0-uTime*0.5);
+        vec3 base=mix(vec3(0.04,0.16,0.34), vec3(0.12,0.45,0.78), lat);
+        vec3 lit=mix(base, vec3(1.0,0.84,0.42), uLit*0.55);
+        float a=0.12+f*0.75+uLit*0.3;
+        gl_FragColor=vec4(lit*(0.3+f*1.2+uLit*1.2), a); }`,
+  })
+);
+earthGroup.add(earthCore);
+const earthGrid = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(5.12, 2),
+  new THREE.MeshBasicMaterial({ color: COL.cyan, wireframe:true, transparent:true, opacity:.16 })
+);
+earthGroup.add(earthGrid);
+
+/* ============================================================
+   CENTRAL CORE (the Infinara nucleus the pillars feed)
+============================================================ */
+const nucleus = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(1.1, 3),
+  new THREE.MeshStandardMaterial({ color:0x0a1226, emissive:COL.cyan, emissiveIntensity:1.6, roughness:.25, metalness:.6 })
+);
+nucleus.position.y = 2.2;
+nucleus.scale.setScalar(0.001);
+earthGroup.add(nucleus);
+const nucleusHalo = new THREE.Mesh(
+  new THREE.TorusGeometry(1.8, .015, 8, 120),
+  new THREE.MeshBasicMaterial({ color:COL.gold, transparent:true, opacity:0 })
+);
+nucleusHalo.rotation.x = Math.PI/2.3;
+nucleusHalo.position.copy(nucleus.position);
+earthGroup.add(nucleusHalo);
+
+/* ============================================================
+   NINE CRYSTALLINE PILLARS in a circle
+============================================================ */
+const RING_R = isMobile ? 6.2 : 7.4;
+const pillars = [];
+const beams = [];
+const pillarGroup = new THREE.Group();
+earthGroup.add(pillarGroup);
+
+const crystalGeo = new THREE.OctahedronGeometry(1, 0);
+crystalGeo.scale(0.55, 1.7, 0.55);
+
+CORNERSTONES.forEach((c, i) => {
+  const angle = (i / 9) * Math.PI * 2 - Math.PI/2;
+  const color = c.gold ? COL.gold : COL.cyan;
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0x0a1430, emissive: color, emissiveIntensity: 0.55,
+    roughness: .18, metalness: .55, transparent: true, opacity: .96,
+  });
+  const m = new THREE.Mesh(crystalGeo, mat);
+  const x = Math.cos(angle)*RING_R, z = Math.sin(angle)*RING_R;
+  m.position.set(x, -2.5, z);
+  m.scale.setScalar(0.001);              /* hidden until the rise begins */
+  m.userData = { index:i, baseY:2.2, x, z, color, viewed:false, hoverT:0, rise:0 };
+  pillarGroup.add(m);
+  pillars.push(m);
+
+  /* base glow disc */
+  const disc = new THREE.Mesh(
+    new THREE.RingGeometry(.55,.8,40),
+    new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0, side:THREE.DoubleSide })
+  );
+  disc.rotation.x = -Math.PI/2;
+  disc.position.set(x, .02, z);
+  pillarGroup.add(disc);
+  m.userData.disc = disc;
+
+  /* energy beam: pillar -> nucleus */
+  const pts = [ new THREE.Vector3(x, 2.2, z), nucleus.position.clone() ];
+  const beam = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color, transparent:true, opacity:0, blending:THREE.AdditiveBlending })
+  );
+  earthGroup.add(beam);
+  beams.push(beam);
+});
+
+/* ============================================================
+   LOADER → INTRO
+============================================================ */
+const loadFill = document.getElementById('loadFill');
+gsap.to(loadFill, { width:'100%', duration:1.1, ease:'power2.inOut', onComplete(){
+  gsap.to('#loader', { opacity:0, duration:.6, onComplete:()=>document.getElementById('loader').remove() });
+}});
+
+/* ============================================================
+   SCROLL CHOREOGRAPHY  (progress object drives everything)
+============================================================ */
+const P = { t:0 };
+ScrollTrigger.create({
+  trigger:'#scrollTrack', start:'top top', end:'bottom bottom', scrub:1,
+  onUpdate(self){ P.t = self.progress; }
+});
+
+/* narrative line opacity windows: [in, hold, out] over P.t */
+const N_WINDOWS = [ [0.02,0.10,0.16], [0.18,0.26,0.32], [0.34,0.42,0.48] ];
+const nlines = [...document.querySelectorAll('.nline')];
+
+function band(t, a, b, c){ /* 0→1 between a..b, 1→0 between b..c */
+  if(t<=a||t>=c) return 0;
+  if(t<b) return (t-a)/(b-a);
+  return 1-(t-b)/(c-b);
+}
+const lerp = (a,b,k)=>a+(b-a)*k;
+const clamp01 = (v)=>Math.min(1,Math.max(0,v));
+const ease = (k)=>k*k*(3-2*k);
+
+/* stage state */
+let stageActive = false, finaleDone = false;
+const hint = document.getElementById('hint');
+const coreId = document.getElementById('coreId');
+const csProgress = document.getElementById('csProgress');
+CORNERSTONES.forEach(()=>csProgress.appendChild(document.createElement('i')));
+const dots = [...csProgress.children];
+
+function applyScroll(){
+  const t = P.t;
+
+  /* narrative text */
+  nlines.forEach((el,i)=>{ const [a,b2,c]=N_WINDOWS[i]; el.style.opacity = band(t,a,(a+c)/2,c); });
+
+  /* camera approach: far → near → orbit-down to stage */
+  const k1 = ease(clamp01(t/0.48));            /* approach during narrative */
+  const k2 = ease(clamp01((t-0.48)/0.3));      /* pillars rise + settle to stage */
+  camera.position.z = lerp(30, 17, k1) - k2*1.5;
+  camera.position.y = lerp(2.5, 6.5, k1) - k2*0.5;
+  camera.lookAt(0, lerp(0, 2.0, k2), 0);
+
+  /* earth spins slowly with scroll */
+  earthGroup.rotation.y = t * 1.6;
+
+  /* pillars rise from the surface */
+  pillars.forEach((m,i)=>{
+    const stagger = clamp01((k2 - i*0.035) / 0.65);
+    const r = ease(stagger);
+    m.userData.rise = r;
+    m.position.y = lerp(-2.5, m.userData.baseY, r);
+    m.userData.disc.material.opacity = r * .5;
+  });
+  nucleus.scale.setScalar(Math.max(0.001, ease(clamp01((k2-0.15)/0.6))));
+  nucleusHalo.material.opacity = ease(clamp01((k2-0.4)/0.5)) * .4;
+
+  /* center identity + stage activation */
+  const idOp = ease(clamp01((t-0.72)/0.12));
+  coreId.style.opacity = finaleDone ? coreId.style.opacity : idOp;
+  const wasActive = stageActive;
+  stageActive = t > 0.8 && !finaleDone;
+  if(stageActive !== wasActive){
+    csProgress.style.opacity = stageActive ? 1 : 0;
+    hint.innerHTML = stageActive
+      ? (isMobile ? 'Tap each cornerstone to activate it' : 'Hover & click each cornerstone to activate it') + '<span class="ln"></span>'
+      : 'Scroll to begin<span class="ln"></span>';
+  }
+  hint.style.opacity = (t < 0.02 || stageActive) ? 1 : 0;
+}
+
+/* ============================================================
+   INTERACTION — raycast hover + click
+============================================================ */
+const ray = new THREE.Raycaster();
+const pointer = new THREE.Vector2(-2,-2);
+let hovered = null, cardOpen = false, viewedCount = 0;
+const hoverTag = document.getElementById('hoverTag');
+
+addEventListener('pointermove', (e)=>{
+  pointer.x = (e.clientX/innerWidth)*2-1;
+  pointer.y = -(e.clientY/innerHeight)*2+1;
+  hoverTag.style.left = e.clientX+'px';
+  hoverTag.style.top = e.clientY+'px';
+}, {passive:true});
+
+function pick(){
+  if(!stageActive || cardOpen){ setHover(null); return; }
+  ray.setFromCamera(pointer, camera);
+  const hit = ray.intersectObjects(pillars, false)[0];
+  setHover(hit ? hit.object : null);
+}
+function setHover(m){
+  if(hovered === m) return;
+  hovered = m;
+  document.body.style.cursor = m ? 'pointer' : '';
+  if(m){
+    hoverTag.textContent = `0${m.userData.index+1} — ${CORNERSTONES[m.userData.index].title}`;
+    hoverTag.style.opacity = 1;
+    moteSpeed = 2.6;
+  } else {
+    hoverTag.style.opacity = 0;
+    moteSpeed = 1;
+  }
+}
+addEventListener('click', ()=>{
+  if(!stageActive || cardOpen) return;
+  ray.setFromCamera(pointer, camera);
+  const hit = ray.intersectObjects(pillars, false)[0];
+  if(hit) openCard(hit.object);
+});
+/* mobile tap: pointerdown sets pointer first */
+addEventListener('pointerdown', (e)=>{
+  pointer.x = (e.clientX/innerWidth)*2-1;
+  pointer.y = -(e.clientY/innerHeight)*2+1;
+}, {passive:true});
+
+/* ============================================================
+   INFO CARD
+============================================================ */
+const cardWrap = document.getElementById('cardWrap');
+function openCard(m){
+  cardOpen = true; setHover(null);
+  const i = m.userData.index, c = CORNERSTONES[i];
+  document.getElementById('cNum').textContent = `Cornerstone 0${i+1} / 09`;
+  document.getElementById('cIcon').textContent = c.icon;
+  document.getElementById('cTitle').textContent = c.title;
+  document.getElementById('cDesc').textContent = c.desc;
+  document.getElementById('cStats').innerHTML =
+    c.stats.map(([b,l])=>`<div class="stat"><b>${b}</b><i>${l}</i></div>`).join('');
+  gsap.to(cardWrap, { autoAlpha:1, duration:.45, ease:'power2.out' });
+  gsap.fromTo('#card', { y:34, scale:.96 }, { y:0, scale:1, duration:.55, ease:'power3.out' });
+
+  /* camera nudge toward pillar */
+  const wp = new THREE.Vector3();
+  m.getWorldPosition(wp);
+  gsap.to(camera.position, { x:wp.x*.35, duration:.9, ease:'power2.inOut' });
+
+  /* activate: beam flows to core */
+  if(!m.userData.viewed){
+    m.userData.viewed = true;
+    viewedCount++;
+    dots[i].classList.add(c.gold ? 'gold' : 'lit');
+    gsap.to(m.material, { emissiveIntensity:1.5, duration:.8 });
+    gsap.to(beams[i].material, { opacity:.7, duration:1.1, ease:'power2.out' });
+    gsap.to(nucleus.material, { emissiveIntensity:'+=0.35', duration:.8 });
+  }
+}
+document.getElementById('cReturn').addEventListener('click', ()=>{
+  gsap.to(cardWrap, { autoAlpha:0, duration:.4, onComplete(){
+    cardOpen = false;
+    gsap.to(camera.position, { x:0, duration:.8, ease:'power2.inOut' });
+    if(viewedCount === 9 && !finaleDone) setTimeout(grandFinale, 600);
+  }});
+});
+
+/* ============================================================
+   GRAND FINALE
+============================================================ */
+function grandFinale(){
+  finaleDone = true; stageActive = false;
+  csProgress.style.opacity = 0; hint.style.opacity = 0;
+  const tl = gsap.timeline();
+
+  /* all pillars surge */
+  pillars.forEach((m,i)=>{
+    tl.to(m.material, { emissiveIntensity:2.6, duration:.5 }, 0);
+    tl.to(beams[i].material, { opacity:1, duration:.5 }, 0);
+  });
+  tl.to(bloom, { strength:1.6, duration:1.2 }, 0);
+  tl.to(coreUniforms.uLit, { value:1, duration:2.2, ease:'power2.inOut' }, .3);
+  tl.to(nucleus.material, { emissiveIntensity:5, duration:1.4 }, .3);
+  tl.to(nucleusHalo.material, { opacity:.9, duration:1 }, .5);
+  tl.to(nucleusHalo.scale, { x:2.4, y:2.4, z:2.4, duration:2.4, ease:'power2.out' }, .5);
+
+  /* title transforms */
+  tl.add(()=>{
+    coreId.classList.add('finale');
+    document.getElementById('coreTitle').textContent = 'TYPE I CIVILIZATION';
+    document.getElementById('coreTag').textContent = 'The Foundation Is Complete';
+    coreId.style.opacity = 1;
+  }, 1.2);
+  tl.fromTo(coreId, { scale:.92 }, { scale:1, duration:.8, ease:'back.out(2)' }, 1.2);
+
+  /* camera pulls back slowly */
+  tl.to(camera.position, { z:26, y:9, duration:5, ease:'power1.inOut' }, 1.4);
+
+  /* final statement */
+  tl.to(coreId, { opacity:0, duration:.8 }, 5.4);
+  tl.to('#finale', { autoAlpha:1, duration:1 }, 5.8);
+  tl.fromTo('#finQuote', { y:26, opacity:0 }, { y:0, opacity:1, duration:1.1, ease:'power3.out' }, 6.0);
+  tl.to('#finBrand', { opacity:1, duration:1 }, 7.4);
+  tl.to('#finActions', { opacity:1, duration:.8 }, 8.0);
+  /* gentle fade toward black behind the text */
+  tl.to('#fadeBlack', { opacity:.55, duration:3 }, 6.0);
+}
+document.getElementById('replay').addEventListener('click', ()=>location.reload());
+
+/* ============================================================
+   RENDER LOOP (adaptive quality)
+============================================================ */
+let frameCount=0, frameAccum=0, lastFrame=performance.now(), qualityLocked=false;
+function adapt(now){
+  if(qualityLocked) return;
+  frameAccum += now-lastFrame; lastFrame = now;
+  if(++frameCount < 90) return;
+  const avg = frameAccum/frameCount; frameCount=0; frameAccum=0;
+  if(avg < 17 && renderer.getPixelRatio() < Math.min(devicePixelRatio,2)){
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    composer.setPixelRatio?.(Math.min(devicePixelRatio,2));
+  } else if(avg > 40){
+    if(useBloom){ useBloom=false; }          /* drop bloom first */
+    else { renderer.setPixelRatio(0.7); qualityLocked=true; }
+  } else qualityLocked = true;
+}
+
+function resize(){
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+const clock = new THREE.Clock();
+function tick(){
+  adapt(performance.now());
+  const t = clock.getElapsedTime();
+  coreUniforms.uTime.value = t;
+
+  applyScroll();
+
+  starsA.rotation.y = t*.003; starsB.rotation.y = -t*.0045;
+  earthGrid.rotation.y = t*.04;
+  nucleus.rotation.y = t*.5; nucleus.rotation.x = t*.22;
+  nucleusHalo.rotation.z = t*.3;
+
+  /* pillar idle float + hover growth */
+  pillars.forEach((m,i)=>{
+    if(m.position.y > 0){
+      m.position.y = m.userData.baseY + Math.sin(t*.9 + i)*0.12;
+      m.rotation.y = t*.4 + i;
+    }
+    const target = (hovered===m) ? 1 : 0;
+    m.userData.hoverT += (target - m.userData.hoverT)*.12;
+    const s = Math.max(0.001, m.userData.rise * (1 + m.userData.hoverT*.1));
+    m.scale.setScalar(s);
+    m.material.emissiveIntensity = (m.userData.viewed ? 1.5 : .55) + m.userData.hoverT*.9;
+  });
+
+  /* motes orbit */
+  const mp = moteGeo.attributes.position.array;
+  for(let i=0;i<moteCount;i++){
+    const d = moteData[i], a = d.a + t*d.s*moteSpeed;
+    mp[i*3]=Math.cos(a)*d.r; mp[i*3+1]=d.y+Math.sin(t*.6+i)*.2; mp[i*3+2]=Math.sin(a)*d.r;
+  }
+  moteGeo.attributes.position.needsUpdate = true;
+
+  pick();
+
+  if(useBloom) composer.render(); else renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+tick();
+
+/* reduced motion: jump straight to the formed stage */
+if(prefersReduced){
+  window.scrollTo(0, document.body.scrollHeight * .85);
+}
+</script>
+</body>
+</html>

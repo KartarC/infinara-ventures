@@ -13,8 +13,10 @@ Marketing/vision site for Infinara Ventures (https://infinaraventures.com) — "
 - Contact form posts via formsubmit.co to mrextuber@gmail.com (no backend)
 - Vercel auto-deploy on push to `main`, `vercel.json` with cleanUrls
 
-## Sections
-Hero → Kardashev Scale (Type 0–III, 73% progress bar) → Six Divisions (Energy, Space, Bio, AI, Education, Coordination) → Roadmap (4 phases to 2075) → Vision quote → Partner contact form
+## Pages
+- `index.html` — Hero → Kardashev Scale (73% bar) → Seven Divisions (Energy, Space, Bio, AI, Education, Coordination, Future Industrial Manufacturing → links to portfolio) → Roadmap → Vision → Contact
+- `portfolio.html` — companies under the belt, grouped: Industrial Manufacturing (Machinist's Vault, Wavlon Lasers), Aerospace (SkyLife Aircrafts), AI (Axon AI — text monogram, no logo asset exists). Logos in `assets/` on white plates. Lightweight starfield bg.
+- `cornerstones.html` — Nine Cornerstones interactive 3D experience: scroll-driven intro narrative → energy Earth → 9 crystalline pillars rise in a ring around a glowing nucleus; hover/click pillars → info cards; all 9 viewed → grand finale (TYPE I CIVILIZATION, fade to final statement). UnrealBloomPass via three/addons importmap; adaptive quality drops bloom then DPR on weak GPUs.
 
 ## Repo
 GitHub: KartarC/infinara-ventures, deployed on Vercel.

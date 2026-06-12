@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Infinara Ventures</title>
+<meta name="description" content="The companies under the Infinara Ventures umbrella — industrial manufacturing, aerospace, and artificial intelligence ventures building toward a Type I civilization.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+:root{
+  --bg:#02050e;
+  --ink:#eaf1ff;
+  --muted:#8da0bf;
+  --cyan:#38e1ff;
+  --line:rgba(141,160,191,.15);
+  --card:rgba(10,18,38,.55);
+  --pad:clamp(1.25rem,5vw,5rem);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:'Inter',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden}
+::selection{background:rgba(56,225,255,.28)}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:600;line-height:1.1;letter-spacing:-.02em}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+#scene{position:fixed;inset:0;z-index:0}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.content{position:relative;z-index:2}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  padding:1rem var(--pad);transition:.4s;border-bottom:1px solid transparent}
+nav.scrolled{background:rgba(2,5,14,.7);backdrop-filter:blur(18px);border-bottom-color:var(--line)}
+.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.14em;display:flex;align-items:center;gap:.55rem;z-index:60;position:relative}
+.logo .bolt{width:26px;height:26px;display:grid;place-items:center;border-radius:7px;background:var(--cyan);font-size:.85rem;flex:none}
+.logo span.v{color:var(--muted);font-weight:400}
+.navlinks{display:flex;gap:2.2rem;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.navlinks a{transition:color .25s}
+.navlinks a:hover,.navlinks a.here{color:var(--cyan)}
+.nav-cta{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;padding:.6rem 1.3rem;border:1px solid rgba(56,225,255,.45);border-radius:99px;color:var(--cyan);transition:.3s}
+.nav-cta:hover{background:rgba(56,225,255,.12)}
+.burger{display:none;z-index:60;position:relative;width:40px;height:40px;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.burger span{display:block;width:22px;height:1.5px;background:var(--ink);transition:.35s}
+body.menu-open .burger span:nth-child(1){transform:translateY(4px) rotate(45deg)}
+body.menu-open .burger span:nth-child(2){transform:translateY(-3.5px) rotate(-45deg)}
+.mobile-menu{position:fixed;inset:0;z-index:55;background:rgba(2,5,14,.92);backdrop-filter:blur(24px);
+  display:flex;flex-direction:column;justify-content:center;gap:.4rem;padding:0 2rem;opacity:0;visibility:hidden;transition:.4s}
+body.menu-open .mobile-menu{opacity:1;visibility:visible}
+.mobile-menu a{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.7rem,7.5vw,2.4rem);font-weight:600;padding:.45rem 0}
+.mobile-menu a:hover{color:var(--cyan)}
+.mobile-menu .mm-label{font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+@media(max-width:880px){.navlinks,.nav-cta{display:none}.burger{display:flex}}
+
+header.page-head{min-height:52svh;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:8rem var(--pad) 3rem;max-width:1400px;margin:0 auto;width:100%}
+.kicker{font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+.kicker::before{content:"";width:30px;height:1px;background:var(--cyan)}
+.page-head h1{font-size:clamp(2.4rem,6.5vw,5rem);text-transform:uppercase}
+.page-head p{color:var(--muted);max-width:620px;margin-top:1.2rem}
+
+section{padding:3.5rem var(--pad);max-width:1400px;margin:0 auto}
+.group-head{display:flex;align-items:baseline;gap:1.2rem;border-bottom:1px solid var(--line);padding-bottom:1rem;margin-bottom:1.6rem;flex-wrap:wrap}
+.group-head .gnum{font-family:'Space Grotesk',sans-serif;font-size:.72rem;letter-spacing:.26em;color:var(--cyan)}
+.group-head h2{font-size:clamp(1.4rem,3vw,2rem)}
+.group-head .gdesc{color:var(--muted);font-size:.85rem;margin-left:auto}
+@media(max-width:760px){.group-head .gdesc{margin-left:0;width:100%}}
+
+.cogrid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem}
+@media(max-width:860px){.cogrid{grid-template-columns:1fr}}
+.co{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:1.8rem;backdrop-filter:blur(14px);
+  display:flex;flex-direction:column;gap:1.2rem;transition:transform .35s,border-color .35s;position:relative;overflow:hidden}
+.co:hover{transform:translateY(-5px);border-color:rgba(56,225,255,.4)}
+.logo-plate{background:#f4f7fb;border-radius:14px;height:120px;display:grid;place-items:center;padding:1rem}
+.logo-plate img{max-height:90px;max-width:80%;object-fit:contain}
+.logo-plate.mono{background:linear-gradient(135deg,#0a1226,#101c3a);border:1px solid rgba(56,225,255,.25)}
+.logo-plate.mono .axon{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:2rem;letter-spacing:.08em;color:var(--ink)}
+.logo-plate.mono .axon b{color:var(--cyan);font-weight:700}
+.co h3{font-size:1.2rem}
+.co .role{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(56,225,255,.3);border-radius:99px;padding:.26rem .7rem;width:max-content}
+.co p{font-size:.9rem;color:var(--muted)}
+.co .meta{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:auto}
+.co .meta span{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.26rem .68rem}
+
+.back-cta{text-align:center;padding:4rem var(--pad) 6rem}
+.btn{font-family:'Space Grotesk',sans-serif;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+  padding:1rem 2.1rem;border-radius:99px;display:inline-block;transition:.3s;margin:.4rem}
+.btn-primary{background:var(--cyan);color:#04101c;font-weight:600;box-shadow:0 0 36px rgba(56,225,255,.28)}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-ghost{border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+
+footer{position:relative;z-index:2;border-top:1px solid var(--line);padding:2.6rem var(--pad);
+  display:flex;flex-wrap:wrap;gap:1.4rem;align-items:center;justify-content:space-between;color:var(--muted);font-size:.8rem;
+  background:rgba(2,5,14,.5);backdrop-filter:blur(10px)}
+footer .flinks{display:flex;gap:1.6rem;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;flex-wrap:wrap}
+footer .flinks a:hover{color:var(--cyan)}
+
+[data-reveal]{opacity:0;transform:translateY(30px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
+[data-reveal].in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<div class="grain"></div>
+
+<nav id="nav">
+  <a class="logo" href="index.html"><span class="bolt">⚡</span>INFINARA<span class="v">&nbsp;VENTURES</span></a>
+  <div class="navlinks">
+    <a href="index.html#kardashev">The Scale</a>
+    <a href="index.html#divisions">Divisions</a>
+    <a class="here" href="portfolio.html">Portfolio</a>
+    <a href="cornerstones.html">Cornerstones</a>
+  </div>
+  <a class="nav-cta" href="index.html#contact">Partner With Us</a>
+  <button class="burger" id="burger" aria-label="Menu"><span></span><span></span></button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mm-label">Navigate</div>
+  <a href="index.html">Home</a>
+  <a href="portfolio.html">Portfolio</a>
+  <a href="cornerstones.html">Cornerstones</a>
+  <a href="index.html#contact">Partner With Us</a>
+</div>
+
+<div class="content">
+
+  <header class="page-head">
+    <div class="kicker">The Companies Under Our Belt</div>
+    <h1>Our Portfolio</h1>
+    <p>Operating companies owned and built by Infinara Ventures — each one a working engine inside a division, compounding toward planetary-scale capability.</p>
+  </header>
+
+  <!-- GROUP: INDUSTRIAL MANUFACTURING -->
+  <section>
+    <div class="group-head" data-reveal>
+      <span class="gnum">GROUP 01</span>
+      <h2>Future Industrial Manufacturing</h2>
+      <span class="gdesc">The machines, tooling, and consumables that build everything else.</span>
+    </div>
+    <div class="cogrid">
+      <div class="co" data-reveal>
+        <div class="logo-plate"><img src="assets/machinists-vault-logo.webp" alt="Machinist's Vault logo" loading="lazy"></div>
+        <span class="role">Industrial Supply &amp; Finishing</span>
+        <h3>Machinist's Vault</h3>
+        <p>Industrial finishing equipment and machine-shop consumables — vibratory finishers, tumbling media, and laser consumables — supplied to fabricators and machine shops across North America.</p>
+        <div class="meta"><span>Finishing Equipment</span><span>Consumables</span><span>E-Commerce</span></div>
+      </div>
+      <div class="co" data-reveal>
+        <div class="logo-plate"><img src="assets/wavlon-lasers-logo.png" alt="Wavlon Lasers logo" loading="lazy"></div>
+        <span class="role">Laser Machinery</span>
+        <h3>Wavlon Lasers</h3>
+        <p>Fiber laser cutting machines engineered for precision sheet-metal and tube fabrication — bringing high-power industrial laser technology within reach of growing shops.</p>
+        <div class="meta"><span>Fiber Lasers</span><span>Sheet &amp; Tube</span><span>Fabrication</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GROUP: AEROSPACE -->
+  <section>
+    <div class="group-head" data-reveal>
+      <span class="gnum">GROUP 02</span>
+      <h2>Aerospace &amp; Aviation</h2>
+      <span class="gdesc">First steps toward a society that moves through the sky as easily as the road.</span>
+    </div>
+    <div class="cogrid">
+      <div class="co" data-reveal>
+        <div class="logo-plate"><img src="assets/skylife-aircrafts-logo.png" alt="SkyLife Aircrafts logo" loading="lazy"></div>
+        <span class="role">Aircraft Brokerage</span>
+        <h3>SkyLife Aircrafts</h3>
+        <p>A private aircraft brokerage connecting buyers and sellers of general-aviation and business aircraft — valuations, listings, and white-glove transaction support.</p>
+        <div class="meta"><span>Brokerage</span><span>Valuations</span><span>Private Aviation</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GROUP: AI -->
+  <section>
+    <div class="group-head" data-reveal>
+      <span class="gnum">GROUP 03</span>
+      <h2>Artificial Intelligence</h2>
+      <span class="gdesc">Force multipliers for every other company in the portfolio.</span>
+    </div>
+    <div class="cogrid">
+      <div class="co" data-reveal>
+        <div class="logo-plate mono"><span class="axon">AX<b>O</b>N&nbsp;AI</span></div>
+        <span class="role">Applied AI</span>
+        <h3>Axon AI</h3>
+        <p>Applied artificial intelligence — autonomous agents and automation systems that run real business operations, from commerce and logistics to content and customer service.</p>
+        <div class="meta"><span>Autonomous Agents</span><span>Automation</span><span>Applied AI</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="back-cta" data-reveal>
+    <a class="btn btn-primary" href="index.html#contact">Partner With Us</a>
+    <a class="btn btn-ghost" href="cornerstones.html">Explore the Nine Cornerstones</a>
+  </div>
+
+</div>
+
+<footer>
+  <div>© <span id="year"></span> Infinara Ventures. Advancing Humanity Toward a Type I Civilization.</div>
+  <div class="flinks">
+    <a href="index.html">Home</a>
+    <a href="portfolio.html">Portfolio</a>
+    <a href="cornerstones.html">Cornerstones</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+</footer>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+/* lightweight starfield background — no Earth on this page, fast load */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 300);
+camera.position.z = 10;
+function makeStars(count, size, spread, color, opacity) {
+  const g = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * spread;
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size, color, transparent: true, opacity, depthWrite: false }));
+}
+const s1 = makeStars(1600, 0.05, 120, 0xcfe0ff, 0.9);
+const s2 = makeStars(500, 0.08, 100, 0x9fb6d8, 0.5);
+scene.add(s1, s2);
+function resize(){ renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+const clock = new THREE.Clock();
+(function tick(){
+  const t = clock.getElapsedTime();
+  s1.rotation.y = t * 0.004; s2.rotation.y = -t * 0.006;
+  camera.position.y = -scrollY * 0.0012;
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+})();
+</script>
+<script>
+const nav = document.getElementById('nav');
+addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
+document.getElementById('year').textContent = new Date().getFullYear();
+document.getElementById('burger').addEventListener('click', () => document.body.classList.toggle('menu-open'));
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.12 });
+document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
