@@ -1067,9 +1067,9 @@ function tick() {
   }
 
   /* Moon orbits behind; outposts appear at the lunar-gateway stage */
-  const ma = t * 0.045 + 2.4;
-  /* orbit kept in the background: shallow z so the Moon never crosses the camera */
-  moon.position.set(Math.cos(ma) * MOON_ORBIT_R, 0.9 * Math.sin(ma * 0.7), Math.sin(ma) * 2.6 - 4.2);
+  /* slow, realistic inclined orbit — the Moon passes behind AND in front of Earth */
+  const ma = t * 0.022 + 2.4;
+  moon.position.set(Math.cos(ma) * MOON_ORBIT_R, Math.sin(ma) * 1.1, Math.sin(ma) * 5.2);
   moon.rotation.y = t * 0.09; /* visible axial rotation */
   const lunarA = stageA(0.52);
   moonBaseMat.opacity = lunarA * 0.95;
@@ -1125,11 +1125,7 @@ function tick() {
   swarm2.mat.opacity = sw2A; swarm2.edgeMat.opacity = sw2A * .9; swarm2.ringMat.opacity = sw2A * .35;
   swarm1.g.rotation.y = t * 0.07;
   swarm2.g.rotation.y = -t * 0.05;
-  sunGlow1.material.opacity = .9 + Math.sin(t * 1.3) * .07;
-  /* the Sun pans right across the sky as the Earth moves along its orbit */
-  sunGroup.position.x = SUN_POS.x + S.t * 34;
-  sunGroup.position.y = SUN_POS.y + Math.sin(S.t * Math.PI) * 2.5; /* shallow orbital arc */
-  sun.position.copy(sunGroup.position);
+  sunGlow1.material.opacity = .9 + Math.sin(t * 1.3) * .07; /* Sun rests fixed in the background */
 
   /* city lights spawn over the dark regions as civilization grows */
   cityLayers.forEach((l) => { l.mat.opacity = stageA(l.stage); });
