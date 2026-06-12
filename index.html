@@ -579,11 +579,64 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 400);
 camera.position.set(0, 0, 9);
 
-/* lights: sun + faint fill */
-const sun = new THREE.DirectionalLight(0xfff2dd, 2.6);
-sun.position.set(-6, 1.5, 4);
+/* lights: sun + faint fill (light direction matches the visible sun) */
+const SUN_POS = new THREE.Vector3(-42, 11, -24);
+const sun = new THREE.DirectionalLight(0xfff2dd, 2.4);
+sun.position.copy(SUN_POS);
 scene.add(sun);
 scene.add(new THREE.AmbientLight(0x223355, 0.55));
+
+/* ---- the visible Sun + Dyson swarms (Type II foreshadowing) ---- */
+const sunGroup = new THREE.Group();
+sunGroup.position.copy(SUN_POS);
+scene.add(sunGroup);
+const sunCore = new THREE.Mesh(
+  new THREE.SphereGeometry(2.7, 24, 24),
+  new THREE.MeshBasicMaterial({ color: 0xfff6dc })
+);
+sunGroup.add(sunCore);
+function glowTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,244,214,1)');
+  g.addColorStop(0.35, 'rgba(255,214,140,.55)');
+  g.addColorStop(1, 'rgba(255,190,90,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+const glowTex = glowTexture();
+const sunGlow1 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: .95, depthWrite: false, blending: THREE.AdditiveBlending }));
+sunGlow1.scale.setScalar(13);
+const sunGlow2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: .35, depthWrite: false, blending: THREE.AdditiveBlending }));
+sunGlow2.scale.setScalar(26);
+sunGroup.add(sunGlow1, sunGlow2);
+
+/* Dyson swarm: rigid rings of collector panels that assemble with scroll */
+function makeSwarm(radius, count, tiltX, tiltZ) {
+  const g = new THREE.Group();
+  g.rotation.set(tiltX, 0, tiltZ);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x0b1322, transparent: true, opacity: 0 });
+  const edgeMat = new THREE.MeshBasicMaterial({ color: 0x38e1ff, transparent: true, opacity: 0 });
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2;
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.05, 0.34), mat);
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.015, 0.05), edgeMat);
+    edge.position.y = 0.035;
+    panel.add(edge);
+    panel.position.set(Math.cos(a) * radius, (Math.sin(a * 3) * 0.3), Math.sin(a) * radius);
+    panel.lookAt(0, 0, 0);
+    g.add(panel);
+  }
+  const ringPts = [];
+  for (let i = 0; i <= 90; i++) { const a = (i / 90) * Math.PI * 2; ringPts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius)); }
+  const ringMat = new THREE.LineBasicMaterial({ color: 0xffd76a, transparent: true, opacity: 0 });
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts), ringMat));
+  sunGroup.add(g);
+  return { g, mat, edgeMat, ringMat };
+}
+const swarm1 = makeSwarm(4.6, 30, 0.35, 0.1);   /* first panels: lunar-gateway era */
+const swarm2 = makeSwarm(6.0, 42, -0.55, 0.3);  /* second shell: utopia era */
 
 /* ================= loading manager / preloader ================= */
 const loadFill = document.getElementById('loadFill');
@@ -753,14 +806,20 @@ ORBITS.forEach((o) => {
   }
   const lineMat = new THREE.LineBasicMaterial({ color: 0x38e1ff, transparent: true, opacity: 0 });
   g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdfe9ff, emissive: 0x38e1ff, emissiveIntensity: 0.6, transparent: true, opacity: 0 });
-  const panelMat = new THREE.MeshStandardMaterial({ color: 0x1a2c55, emissive: 0x2f7bff, emissiveIntensity: 0.8, transparent: true, opacity: 0 });
+  /* realistic scale: gold-foil bus, twin solar wings, small dish */
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xc9a85c, emissive: 0x6b4f1a, emissiveIntensity: 0.35, roughness: .5, metalness: .8, transparent: true, opacity: 0 });
+  const panelMat = new THREE.MeshStandardMaterial({ color: 0x0e1d44, emissive: 0x2f7bff, emissiveIntensity: 0.45, roughness: .35, metalness: .4, transparent: true, opacity: 0 });
   const sats = [];
   for (let i = 0; i < o.sats; i++) {
     const sat = new THREE.Group();
-    sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 0.05), bodyMat));
-    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.004, 0.06), panelMat);
-    sat.add(panel);
+    sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.03, 0.03), bodyMat));
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(0.082, 0.0018, 0.03), panelMat);
+    wingL.position.x = -0.066;
+    const wingR = wingL.clone();
+    wingR.position.x = 0.066;
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.004, 8), bodyMat);
+    dish.position.y = 0.02;
+    sat.add(wingL, wingR, dish);
     sat.userData.phase = (i / o.sats) * Math.PI * 2;
     g.add(sat);
     sats.push(sat);
@@ -833,6 +892,24 @@ const ships = new THREE.Points(shipGeo, shipMat);
 earthGroup.add(ships);
 const laneCurve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3());
 
+/* --- city lights spawning on the dark regions (Africa first) --- */
+function latLonToVec(lat, lon, r) {
+  const phi = THREE.MathUtils.degToRad(lat), theta = THREE.MathUtils.degToRad(lon);
+  return new THREE.Vector3(-r * Math.cos(phi) * Math.cos(theta), r * Math.sin(phi), r * Math.cos(phi) * Math.sin(theta));
+}
+const CITY_BATCHES = [
+  { stage: 0.12, pts: [[6.5,3.4],[30,31.2],[-26.2,28],[-1.3,36.8]] },                                     /* Lagos, Cairo, Joburg, Nairobi */
+  { stage: 0.40, pts: [[-4.3,15.3],[5.6,-0.2],[9,38.7],[15.5,32.5],[33.6,-7.6],[-6.8,39.3],[12,8.5]] },   /* Kinshasa, Accra, Addis, Khartoum, Casablanca, Dar, Kano */
+  { stage: 0.65, pts: [[21,10],[0,22],[-23,134],[-4,-63],[62,105],[47,104],[32,88],[67,-45],[-30,-68]] }, /* Sahara, Congo, Outback, Amazon, Siberia, Mongolia, Tibet, Greenland, Andes */
+];
+const cityLayers = CITY_BATCHES.map((batch) => {
+  const geo = new THREE.BufferGeometry().setFromPoints(batch.pts.map(([la, lo]) => latLonToVec(la, lo, EARTH_R * 1.012)));
+  const mat = new THREE.PointsMaterial({ size: 0.085, color: 0xffd9a0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pts = new THREE.Points(geo, mat);
+  earth.add(pts); /* child of earth: spins with the planet's axis */
+  return { mat, stage: batch.stage };
+});
+
 /* --- utopia layer: energy grid + golden mega-ring --- */
 const utopiaGrid = new THREE.Mesh(
   new THREE.IcosahedronGeometry(EARTH_R * 1.005, 3),
@@ -855,12 +932,6 @@ earthGroup.scale.setScalar(L.heroScale * 0.85);
 camera.position.z = L.camZ;
 
 /* ================= render loop ================= */
-let mouseX = 0, mouseY = 0;
-addEventListener('pointermove', (e) => {
-  mouseX = (e.clientX / innerWidth - 0.5) * 2;
-  mouseY = (e.clientY / innerHeight - 0.5) * 2;
-}, { passive: true });
-
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
@@ -935,7 +1006,7 @@ function tick() {
   const ma = t * 0.045 + 2.4;
   /* orbit kept in the background: shallow z so the Moon never crosses the camera */
   moon.position.set(Math.cos(ma) * MOON_ORBIT_R, 0.9 * Math.sin(ma * 0.7), Math.sin(ma) * 2.6 - 4.2);
-  moon.rotation.y = t * 0.02;
+  moon.rotation.y = t * 0.09; /* visible axial rotation */
   const lunarA = stageA(0.52);
   moonBaseMat.opacity = lunarA * 0.95;
   moonStations.forEach((ms) => {
@@ -979,12 +1050,20 @@ function tick() {
   megaRingMat.opacity = utopiaA * 0.55;
   megaRing.rotation.z = t * 0.05;
 
-  /* gentle mouse parallax (desktop) */
-  if (!isMobile) {
-    camera.position.x += (mouseX * 0.35 - camera.position.x) * 0.04;
-    camera.position.y += (-mouseY * 0.25 - camera.position.y) * 0.04;
-  }
+  /* fixed camera — only the Earth turns on its axis */
   camera.lookAt(0, 0, 0);
+
+  /* Dyson swarms assemble around the Sun */
+  const sw1A = stageA(0.52), sw2A = stageA(0.78);
+  swarm1.g.visible = sw1A > 0.01; swarm2.g.visible = sw2A > 0.01;
+  swarm1.mat.opacity = sw1A; swarm1.edgeMat.opacity = sw1A * .9; swarm1.ringMat.opacity = sw1A * .35;
+  swarm2.mat.opacity = sw2A; swarm2.edgeMat.opacity = sw2A * .9; swarm2.ringMat.opacity = sw2A * .35;
+  swarm1.g.rotation.y = t * 0.07;
+  swarm2.g.rotation.y = -t * 0.05;
+  sunGlow1.material.opacity = .9 + Math.sin(t * 1.3) * .07;
+
+  /* city lights spawn over the dark regions as civilization grows */
+  cityLayers.forEach((l) => { l.mat.opacity = stageA(l.stage); });
 
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
@@ -1030,9 +1109,8 @@ function buildScroll() {
      .to(earthGroup.position, { x: 0, y: 0.15 }, 0.8)          /* vision/contact: center, close-up */
      .to(earthGroup.scale, { x: 1.65, y: 1.65, z: 1.65 }, 0.8);
   }
-  /* slow extra spin tied to scroll + sun swings around = day/night shift */
+  /* extra axial spin tied to scroll (sun stays fixed — it has a visible body now) */
   j.to(earth.rotation, { y: '+=2.4' }, 0);
-  j.to(sun.position, { x: 6, z: -2 }, 0.55);
   j.to(atmosphere.material.uniforms.uIntensity, { value: 1.6 }, 0.75);
 
   /* generic reveals */
@@ -1080,8 +1158,8 @@ const scrollProgress = document.getElementById('scrollProgress');
 const ERAS = [
   [0.00, '2026', 'Type 0.73 — first satellite constellations circle the Earth.'],
   [0.28, '2040', 'Orbital expansion — space stations come online above the planet.'],
-  [0.52, '2060', 'Lunar gateway — outposts activate around the Moon.'],
-  [0.78, '2075', 'Type I — the planetary grid completes. Earth becomes a utopia.'],
+  [0.52, '2060', 'Lunar gateway — Moon outposts activate; first Dyson panels reach the Sun.'],
+  [0.78, '2075', 'Type I — planetary grid complete; the Dyson swarm grows. Earth becomes a utopia.'],
 ];
 const earthHud = document.getElementById('earthHud');
 const ehEra = document.getElementById('ehEra');
