@@ -321,9 +321,24 @@ const earthCore = new THREE.Mesh(
 earthGroup.add(earthCore);
 const earthGrid = new THREE.Mesh(
   new THREE.IcosahedronGeometry(5.12, 2),
-  new THREE.MeshBasicMaterial({ color: COL.cyan, wireframe:true, transparent:true, opacity:.16 })
+  new THREE.MeshBasicMaterial({ color: COL.cyan, wireframe:true, transparent:true, opacity:0 })
 );
 earthGroup.add(earthGrid);
+
+/* realistic Earth skin: shown rotating at the top, fades into the energy grid */
+const sunLight = new THREE.DirectionalLight(0xfff2dd, 1.4);
+sunLight.position.set(-9, 4, 7);
+scene.add(sunLight);
+const skinMat = new THREE.MeshStandardMaterial({ color: 0x6d84a8, roughness: .9, metalness: .05, transparent: true, opacity: 1 });
+const skinLoader = new THREE.TextureLoader();
+skinLoader.setCrossOrigin('anonymous');
+skinLoader.load('https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
+  (tx) => { tx.colorSpace = THREE.SRGBColorSpace; skinMat.map = tx; skinMat.color.set(0xffffff); skinMat.needsUpdate = true; },
+  undefined, () => {});
+const earthSkin = new THREE.Mesh(new THREE.SphereGeometry(5.03, 48, 48), skinMat);
+earthSkin.rotation.z = THREE.MathUtils.degToRad(-23.4);
+earthSkin.renderOrder = 2;
+earthGroup.add(earthSkin);
 
 /* ============================================================
    CENTRAL CORE (the Infinara nucleus the pillars feed)
@@ -386,7 +401,7 @@ CORNERSTONES.forEach((c, i) => {
     new THREE.BufferGeometry().setFromPoints(pts),
     new THREE.LineBasicMaterial({ color, transparent:true, opacity:0, blending:THREE.AdditiveBlending })
   );
-  earthGroup.add(beam);
+  pillarGroup.add(beam); /* beams ride along when the ring spins */
   beams.push(beam);
 });
 
@@ -429,10 +444,17 @@ CORNERSTONES.forEach(()=>csProgress.appendChild(document.createElement('i')));
 const dots = [...csProgress.children];
 
 function applyScroll(){
+  if(finaleDone) return; /* the finale timeline owns the camera from here */
   const t = P.t;
 
   /* narrative text */
   nlines.forEach((el,i)=>{ const [a,b2,c]=N_WINDOWS[i]; el.style.opacity = band(t,a,(a+c)/2,c); });
+
+  /* the realistic skin fades out, revealing the energy planet beneath */
+  const shed = ease(clamp01((t - 0.12) / 0.22));
+  skinMat.opacity = 1 - shed;
+  earthSkin.visible = skinMat.opacity > 0.01;
+  earthGrid.material.opacity = 0.03 + shed * 0.13;
 
   /* camera approach: far → near → orbit-down to stage */
   const k1 = ease(clamp01(t/0.48));            /* approach during narrative */
@@ -531,10 +553,13 @@ function openCard(m){
   gsap.to(cardWrap, { autoAlpha:1, duration:.45, ease:'power2.out' });
   gsap.fromTo('#card', { y:34, scale:.96 }, { y:0, scale:1, duration:.55, ease:'power3.out' });
 
-  /* camera nudge toward pillar */
-  const wp = new THREE.Vector3();
-  m.getWorldPosition(wp);
-  gsap.to(camera.position, { x:wp.x*.35, duration:.9, ease:'power2.inOut' });
+  /* spin the ring so far-side cornerstones swing around to face the camera */
+  const angle0 = Math.atan2(m.userData.z, m.userData.x);
+  const want = Math.PI / 2 - angle0 - earthGroup.rotation.y;     /* front = +z toward camera */
+  const cur = pillarGroup.rotation.y;
+  const target = cur + THREE.MathUtils.euclideanModulo(want - cur + Math.PI, Math.PI * 2) - Math.PI; /* shortest turn */
+  gsap.to(pillarGroup.rotation, { y: target, duration: 1.15, ease: 'power2.inOut' });
+  gsap.to(camera.position, { x: 0, duration: .9, ease: 'power2.inOut' });
 
   /* activate: beam flows to core */
   if(!m.userData.viewed){
@@ -632,6 +657,7 @@ function tick(){
 
   starsA.rotation.y = t*.003; starsB.rotation.y = -t*.0045;
   earthGrid.rotation.y = t*.04;
+  earthSkin.rotation.y = t*.06; /* the realistic Earth turns on its axis at the top */
   nucleus.rotation.y = t*.5; nucleus.rotation.x = t*.22;
   nucleusHalo.rotation.z = t*.3;
 
