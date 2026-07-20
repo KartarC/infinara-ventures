@@ -351,7 +351,7 @@ footer .flinks a:hover{color:var(--cyan)}
 
 /* ============ mobile polish ============ */
 .earth-hud{transition:opacity .3s,border-color .5s}
-body.menu-open .earth-hud{opacity:0;pointer-events:none}
+body.menu-open .earth-hud,.earth-hud.hud-hidden{opacity:0;pointer-events:none}
 @media(max-width:640px){
   /* hero: clear the status HUD, full-width CTAs, calmer type */
   .hero{padding-bottom:10.5rem}
@@ -1325,6 +1325,11 @@ addEventListener('scroll', () => {
   ERAS.forEach(([th], k) => { if (p >= th) i = k; });
   setEra(i);
 }, { passive: true });
+
+/* keep the HUD clear of the footer */
+new IntersectionObserver((entries) => {
+  earthHud.classList.toggle('hud-hidden', entries[0].isIntersecting);
+}, { threshold: 0.05 }).observe(document.querySelector('footer'));
 
 /* journey nav: highlight the chapter in view */
 const journeyLinks = [...document.querySelectorAll('#journeyNav a')];
