@@ -1316,6 +1316,7 @@ function setEra(i) {
   earthHud.classList.toggle('utopia', i === 3);
   [ehEra, ehStage].forEach((el) => { el.classList.remove('eh-fade'); void el.offsetWidth; el.classList.add('eh-fade'); });
 }
+const footerEl = document.querySelector('footer');
 addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', scrollY > 40);
   const max = document.documentElement.scrollHeight - innerHeight;
@@ -1324,12 +1325,9 @@ addEventListener('scroll', () => {
   let i = 0;
   ERAS.forEach(([th], k) => { if (p >= th) i = k; });
   setEra(i);
+  /* keep the HUD clear of the footer */
+  earthHud.classList.toggle('hud-hidden', footerEl.getBoundingClientRect().top < innerHeight - 30);
 }, { passive: true });
-
-/* keep the HUD clear of the footer */
-new IntersectionObserver((entries) => {
-  earthHud.classList.toggle('hud-hidden', entries[0].isIntersecting);
-}, { threshold: 0.05 }).observe(document.querySelector('footer'));
 
 /* journey nav: highlight the chapter in view */
 const journeyLinks = [...document.querySelectorAll('#journeyNav a')];
