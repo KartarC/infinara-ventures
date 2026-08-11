@@ -65,6 +65,21 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .logo span.v{color:var(--muted);font-weight:400}
 .bar .back{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);transition:.3s;border:1px solid var(--line);border-radius:99px;padding:.55rem 1.1rem}
 .bar .back:hover{color:var(--cyan);border-color:rgba(56,225,255,.4)}
+.bar-right{display:flex;align-items:center;gap:.6rem}
+.burger{display:none;z-index:60;position:relative;width:40px;height:40px;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:none;border:none;cursor:pointer}
+.burger span{display:block;width:22px;height:1.5px;background:var(--ink);transition:.35s}
+body.menu-open .burger span:nth-child(1){transform:translateY(4px) rotate(45deg)}
+body.menu-open .burger span:nth-child(2){transform:translateY(-3.5px) rotate(-45deg)}
+.mobile-menu{position:fixed;inset:0;z-index:55;background:rgba(2,5,14,.92);backdrop-filter:blur(24px);
+  display:flex;flex-direction:column;justify-content:center;gap:.4rem;padding:0 2rem;opacity:0;visibility:hidden;transition:opacity .4s,visibility .4s}
+body.menu-open .mobile-menu{opacity:1;visibility:visible}
+.mobile-menu a{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.7rem,7.5vw,2.4rem);font-weight:600;padding:.45rem 0;color:var(--ink)}
+.mobile-menu a:hover,.mobile-menu a.here{color:var(--cyan)}
+.mobile-menu .mm-label{font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+@media(max-width:880px){
+  .bar .back{display:none}
+  .burger{display:flex}
+}
 
 /* intro narrative lines */
 .narrative{position:fixed;inset:0;z-index:10;display:grid;place-items:center;pointer-events:none;text-align:center;padding:0 1.5rem}
@@ -175,7 +190,18 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 <div class="bar">
   <a class="logo" href="index.html"><img class="mark" src="assets/infinara-mark-512.png" alt="Infinara Ventures mark">INFINARA<span class="v">&nbsp;VENTURES</span></a>
-  <a class="back" href="index.html">← Home</a>
+  <div class="bar-right">
+    <a class="back" href="index.html">← Home</a>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span></button>
+  </div>
+</div>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mm-label">Navigate</div>
+  <a href="index.html">Home</a>
+  <a href="portfolio.html">Portfolio</a>
+  <a class="here" href="cornerstones.html">Cornerstones</a>
+  <a href="index.html#contact">Partner With Us</a>
 </div>
 
 <div class="narrative" id="narrative">
@@ -544,7 +570,7 @@ addEventListener('pointermove', (e)=>{
 }, {passive:true});
 
 function pick(){
-  if(!stageActive || cardOpen){ setHover(null); return; }
+  if(!stageActive || cardOpen || document.body.classList.contains('menu-open')){ setHover(null); return; }
   ray.setFromCamera(pointer, camera);
   const hit = ray.intersectObjects(pillars, false)[0];
   setHover(hit ? hit.object : null);
@@ -562,11 +588,18 @@ function setHover(m){
     moteSpeed = 1;
   }
 }
-addEventListener('click', ()=>{
+addEventListener('click', (e)=>{
   if(!stageActive || cardOpen) return;
+  if(document.body.classList.contains('menu-open')) return;
+  if(e.target.closest && e.target.closest('.bar,.mobile-menu,.card-wrap,.finale')) return;
   ray.setFromCamera(pointer, camera);
   const hit = ray.intersectObjects(pillars, false)[0];
   if(hit) openCard(hit.object);
+});
+
+/* mobile menu */
+document.getElementById('burger').addEventListener('click', ()=>{
+  document.body.classList.toggle('menu-open');
 });
 /* mobile tap: pointerdown sets pointer first */
 addEventListener('pointerdown', (e)=>{
