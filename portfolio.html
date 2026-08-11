@@ -124,6 +124,27 @@ footer .flinks a:hover{color:var(--cyan)}
 
 [data-reveal]{opacity:0;transform:translateY(30px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
 [data-reveal].in{opacity:1;transform:none}
+
+/* ============ mobile polish ============ */
+@media(max-width:640px){
+  header.page-head{min-height:34svh;padding:6.5rem 1.25rem 2rem}
+  .page-head h1{font-size:clamp(2rem,9vw,2.5rem)}
+  .page-head p{font-size:.92rem}
+  section{padding:2.4rem 1.25rem}
+  .group-head{padding-bottom:.85rem;margin-bottom:1.2rem;gap:.6rem 1rem}
+  .group-head h2{font-size:1.3rem}
+  .group-head .gdesc{font-size:.8rem}
+  .co{padding:1.4rem;gap:1rem}
+  .logo-plate{height:100px}
+  .logo-plate img{max-height:74px}
+  .co h3{font-size:1.1rem}
+  .co p{font-size:.87rem}
+  .back-cta{padding:2.6rem 1.25rem 4rem}
+  .back-cta .btn{display:block;margin:.5rem auto;max-width:340px}
+  footer{flex-direction:column;text-align:center;gap:1rem}
+  footer>div{justify-content:center}
+  footer .flinks{justify-content:center}
+}
 @media (prefers-reduced-motion: reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 </style>
 </head>

@@ -91,8 +91,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .hint .ln{display:block;width:1px;height:36px;margin:0.6rem auto 0;background:linear-gradient(180deg,var(--cyan),transparent);animation:drip 2s ease-in-out infinite}
 @keyframes drip{0%{transform:scaleY(0);transform-origin:top}55%{transform:scaleY(1);transform-origin:top}56%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
-/* progress dots (9 cornerstones) */
-.cs-progress{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:25;display:flex;gap:.55rem;opacity:0;transition:opacity .5s;pointer-events:none}
+/* progress dots (9 cornerstones) — stacked above the hint so they never overlap */
+.cs-progress{position:fixed;bottom:4.6rem;left:50%;transform:translateX(-50%);z-index:25;display:flex;gap:.55rem;opacity:0;transition:opacity .5s;pointer-events:none}
 .cs-progress i{width:8px;height:8px;border-radius:50%;border:1px solid var(--muted);transition:.4s}
 .cs-progress i.lit{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 12px rgba(56,225,255,.8)}
 .cs-progress i.gold{background:var(--gold);border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,106,.8)}
@@ -136,6 +136,28 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* scroll spacer */
 .track{position:relative;z-index:2;pointer-events:none}
+
+/* ============ mobile polish ============ */
+@media(max-width:640px){
+  .bar{padding:.85rem 1rem}
+  .logo{font-size:.85rem}
+  .logo span.v{display:none}          /* just "INFINARA" — keeps clear of the Home button */
+  .bar .back{padding:.5rem .95rem;font-size:.62rem}
+  .narrative .nline{font-size:clamp(1.3rem,6.4vw,1.8rem)}
+  .core-id h1{font-size:1rem;letter-spacing:.22em;text-indent:.22em}
+  .core-id p{font-size:.58rem;letter-spacing:.22em}
+  .hint{font-size:.56rem;letter-spacing:.22em;max-width:86vw;bottom:calc(1.1rem + env(safe-area-inset-bottom))}
+  .hint .ln{height:26px}
+  .cs-progress{bottom:calc(4rem + env(safe-area-inset-bottom));gap:.45rem}
+  .cs-progress i{width:7px;height:7px}
+  .card{padding:1.4rem;border-radius:18px}
+  .card .cicon{font-size:1.8rem}
+  .card .stats{gap:.6rem;margin:1.2rem 0}
+  .card .stat{padding:.8rem .5rem}
+  .card .ret{width:100%;text-align:center}
+  .finale blockquote{font-size:clamp(1.3rem,6.2vw,1.9rem)}
+  .finale .factions a,.finale .factions button{display:block;width:100%;max-width:320px;margin:.4rem auto;text-align:center}
+}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
